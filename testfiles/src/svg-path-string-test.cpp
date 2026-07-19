@@ -119,6 +119,21 @@ INSTANTIATE_TEST_SUITE_P(
                     _P(PathFormatCase, "m 12,13 3,5 1,1 v 2 4 h 10 3", PATHSTRING_RELATIVE, 2, -8, false),
                     _P(PathFormatCase, "m 12,13 3,5 1,1 v 2 4 h 10 3", PATHSTRING_OPTIMIZE, 2, -8, false)));
 
+// Absolute movement followed by relative
+TEST(SvgPathString, HVAbsRel)
+{
+    PathString formatter(PATHSTRING_OPTIMIZE, 8, -8, false);
+    Geom::Coord positions[] = {10.5, 21, 31.5, 42, 43, 44, 45};
+    for (auto p : positions) {
+        formatter.horizontalLineTo(p);
+    }
+    for (auto p : positions) {
+        formatter.verticalLineTo(p);
+    }
+    auto res = static_cast<std::string>(formatter);
+    EXPECT_EQ(res, "H 10.5 21 31.5 42 h 1 1 1 V 10.5 21 31.5 42 v 1 1 1");
+}
+
 class PathStringBasicCurve : public PathStringBasicTest
 {
 };
