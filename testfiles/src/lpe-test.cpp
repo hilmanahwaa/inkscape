@@ -10,14 +10,14 @@
  */
 
 #include <gtest/gtest.h>
-#include <testfiles/lpespaths-test.h>
-#include <src/document.h>
 #include <src/document-update.h>
+#include <src/document.h>
 #include <src/inkscape.h>
 #include <src/live_effects/lpe-bool.h>
 #include <src/live_effects/lpe-tiling.h>
 #include <src/object/sp-ellipse.h>
 #include <src/object/sp-lpe-item.h>
+#include <testfiles/lpespaths-test.h>
 
 using namespace Inkscape;
 using namespace Inkscape::LivePathEffect;
