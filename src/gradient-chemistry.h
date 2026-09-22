@@ -78,7 +78,7 @@ unsigned int sp_number_of_stops_before_stop(SPGradient* gradient, SPStop *target
 
 SPStop *sp_vector_add_stop(SPGradient *vector, SPStop* prev_stop, SPStop* next_stop, gfloat offset);
 
-void sp_gradient_delete_stop(SPGradient* gradient, SPStop* stop);
+bool sp_gradient_delete_stop(SPGradient* gradient, SPStop* stop);
 SPStop* sp_gradient_add_stop(SPGradient* gradient, SPStop* current);
 SPStop* sp_gradient_add_stop_at(SPGradient* gradient, double offset);
 void sp_set_gradient_stop_color(SPDocument* document, SPStop* stop, Color const &color);

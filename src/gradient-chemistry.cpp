@@ -771,16 +771,19 @@ SPStop *sp_vector_add_stop(SPGradient *vector, SPStop* prev_stop, SPStop* next_s
 }
 
 // delete gradient's stop
-void sp_gradient_delete_stop(SPGradient* gradient, SPStop* stop) {
+bool sp_gradient_delete_stop(SPGradient* gradient, SPStop* stop) {
 
     if (!stop || !gradient) {
-        return;
+        return false;
     }
 
     if (gradient->getStopCount() > 2) { // 2 is the minimum
         gradient->getRepr()->removeChild(stop->getRepr());
         DocumentUndo::done(gradient->document, RC_("Undo", "Delete gradient stop"), INKSCAPE_ICON("color-gradient"));
+        return true;
     }
+
+    return false;
 }
 
 // make gradient well-formed if needed; from gradient-vector.cpp
