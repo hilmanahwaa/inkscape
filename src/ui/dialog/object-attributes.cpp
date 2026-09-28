@@ -1904,6 +1904,17 @@ private:
         std::size_t node_count = 0;
         if (curve) {
             node_count = curve->curveCount();
+            if (node_count == 0 && !curve->empty()) {
+                for (Geom::PathVector::const_iterator i = curve->begin(); i != curve->end(); ++i) {
+                    if (i->closed()) {
+                        // An "empty" closed path has one node (the starting move), but zero curves
+                        // because the degenerate close curve is discounted. It's weird if there's
+                        // a node on screen to interact with while this dialog says there are zero
+                        // nodes in the path, so correct it here.
+                        node_count += 1;
+                    }
+                }
+            }
         }
         return node_count;
     }

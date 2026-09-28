@@ -724,6 +724,19 @@ void PathManipulator::deleteNodes(NodeDeleteMode delete_mode)
             continue;
         }
 
+        if (sp->closed() && num_unselected == 1) {
+            // Special case for deleting all but one node in a closed path, to avoid a troublesome
+            // empty path.
+            NodeList::iterator keep = sp->begin();
+            while (keep->selected()) {
+                keep = keep.next();
+            }
+
+            _deleteRest(keep);
+            ++i;
+            continue;
+        }
+
         // In closed paths, start from an unselected node - otherwise we might start in the middle
         // of a selected stretch and the resulting bezier fit would be suboptimal
         NodeList::iterator sel_beg = sp->begin(), sel_end;
@@ -757,6 +770,32 @@ double get_angle(const Geom::Point& p0, const Geom::Point& p1, const Geom::Point
     auto a1 = atan2(d1);
     auto a2 = atan2(d2);
     return a1 - a2;
+}
+
+/**
+ * Delete all nodes except for one in a closed subpath.
+ * The given range can cross the beginning of the subpath in closed subpaths.
+ * @param keep       The node not to delete.
+ */
+void PathManipulator::_deleteRest(NodeList::iterator keep)
+{
+    NodeList::iterator cur = keep.next();
+    if (!cur) {
+        // This function should only be called with an iterator on a closed path, where there is
+        // always a next node.
+        return;
+    }
+
+    Geom::Point first_node_position = cur->position();
+    Geom::Point last_node_position;
+
+    NodeList &nl = keep->nodeList();
+    while (cur && cur != keep) {
+        last_node_position = cur->position();
+        NodeList::iterator next = cur.next();
+        nl.erase(cur);
+        cur = next;
+    }
 }
 
 /**
@@ -1337,6 +1376,7 @@ void PathManipulator::_createControlPointsFromGeometry()
 
     // sanitize pathvector and store it in SPCurve,
     // so that _updateDragPoint doesn't crash on paths with naked movetos
+    // note that close paths cannot have naked movetos - they have at least a degenerate closing path
     Geom::PathVector pathv;
     if (_is_bspline) {
         pathv = pathv_to_cubicbezier(_spcurve, false);
@@ -1347,7 +1387,7 @@ void PathManipulator::_createControlPointsFromGeometry()
         // NOTE: this utilizes the fact that Geom::PathVector is an std::vector.
         // When we erase an element, the next one slides into position,
         // so we do not increment the iterator.
-        if (i->empty()) {
+        if (i->empty() && !i->closed()) {
             i = pathv.erase(i);
         } else {
             ++i;
@@ -1360,7 +1400,7 @@ void PathManipulator::_createControlPointsFromGeometry()
 
     pathv *= _getTransform();
 
-    // in this loop, we know that there are no zero-segment subpaths
+    // in this loop, we know that there are no zero-segment open subpaths
     for (auto & pit : pathv) {
         // prepare new subpath
         SubpathPtr subpath(new NodeList(_subpaths));
@@ -1564,7 +1604,7 @@ void PathManipulator::_createGeometryFromControlPoints(bool alert_LPE)
         // NOTE: this utilizes the fact that Geom::PathVector is an std::vector.
         // When we erase an element, the next one slides into position,
         // so we do not increment the iterator even though it is theoretically invalidated.
-        if (i->empty()) {
+        if (i->empty() && !i->closed()) {
             i = pathv.erase(i);
         } else {
             ++i;
@@ -1745,8 +1785,13 @@ bool PathManipulator::_nodeClicked(Node *n, ButtonReleaseEvent const &event, boo
         NodeList &nl = iter->nodeList();
 
         if (nl.size() <= 1 || (nl.size() <= 2 && !nl.closed())) {
-            // Removing last node of closed path - delete it
+            // Removing last node of closed path, or one of last two of an open path - delete the
+            // whole path
             nl.kill();
+        } else if (nl.size() == 2 && nl.closed()) {
+            // Removing one of two nodes in a closed path - special case deletion to avoid a single
+            // node with an empty path.
+            _deleteRest(iter.next());
         } else {
             // In other cases, delete the node under cursor
             _deleteStretch(iter, iter.next(), NodeDeleteMode::curve_fit);
