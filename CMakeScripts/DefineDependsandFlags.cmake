@@ -279,6 +279,34 @@ pkg_check_modules(
 )
 list(APPEND INKSCAPE_LIBS PkgConfig::MM)
 
+pkg_check_modules(CAIRO QUIET IMPORTED_TARGET cairo>=1.18.6)
+if(CAIRO_FOUND)
+    add_library(Inkscape::Cairo ALIAS PkgConfig::CAIRO)
+else()
+    message(STATUS "Cairo too old, will compile it from source")
+    include(ExternalProject)
+    ExternalProject_Add(cairo
+        URL https://cairographics.org/releases/cairo-1.18.6.tar.xz
+        URL_HASH SHA256=1c767308174337a74694da0f3ec069c271452163a1ef4540964c50c301f157d4
+        CONFIGURE_COMMAND meson setup . ../cairo -Dfontconfig=enabled -Dfreetype=enabled --prefix=${CMAKE_CURRENT_BINARY_DIR}/deps-cairo --libdir lib
+        BUILD_COMMAND meson compile
+        INSTALL_COMMAND meson install
+        STEP_TARGETS install
+    )
+    add_library(cairo_LIB INTERFACE)
+    add_dependencies(cairo_LIB cairo-install)
+    target_include_directories(cairo_LIB INTERFACE ${CMAKE_CURRENT_BINARY_DIR}/deps-cairo/include/cairo)
+    target_link_directories(cairo_LIB INTERFACE ${CMAKE_CURRENT_BINARY_DIR}/deps-cairo/lib)
+    target_link_libraries(cairo_LIB INTERFACE -lcairo)
+    install(
+        DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/deps-cairo/lib/
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        USE_SOURCE_PERMISSIONS
+    )
+    add_library(Inkscape::Cairo ALIAS cairo_LIB)
+endif()
+list(APPEND INKSCAPE_LIBS Inkscape::Cairo)
+
 # if system's gtk is new enough for gtkmm, pick it, otherwise ignore it and gtkmm build will build it
 pkg_check_modules(GTK IMPORTED_TARGET gtk4>=4.14.0)
 if(GTK_FOUND)
