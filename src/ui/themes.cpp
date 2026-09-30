@@ -467,8 +467,8 @@ void ThemeContext::add_gtk_css(bool only_providers, bool cached)
             g_critical("CSSProviderError::load_from_path(): failed to load '%s'\n(%s)", style.c_str(),
                        ex.what());
         }
-        // increased priority to be able to override Inkscape style.css
-        Gtk::StyleProvider::add_provider_for_display(display, _userprovider, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION + 20);
+        // increased priority to be able to override user's ~/.config/gtk-4.0/gtk.css
+        Gtk::StyleProvider::add_provider_for_display(display, _userprovider, GTK_STYLE_PROVIDER_PRIORITY_USER + 1);
     }
 
 }
