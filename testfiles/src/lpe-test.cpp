@@ -80,7 +80,7 @@ TEST_F(LPETest, Bool_canBeApplyedToNonSiblingPaths)
 // TILING LPE
 TEST_F(LPETest, Tiling_preservesGapValuesOnLoadWithNonPxUnit)
 {
-    // Verify fix for issue #11713
+    // Verify fix for https://gitlab.com/inkscape/inkscape/-/work_items/5940
     constexpr auto svg = R"A(
 <svg width='200' height='200'
   xmlns:sodipodi='http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd'
