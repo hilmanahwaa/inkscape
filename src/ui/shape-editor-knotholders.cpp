@@ -677,6 +677,7 @@ public:
     Geom::Point knot_get() const override;
     void knot_set(Geom::Point const &p, Geom::Point const &origin, unsigned int state) override;
     void knot_ungrabbed(Geom::Point const &p, Geom::Point const &origin, guint state) override {};
+    bool default_direction_is_xy() const;
 
 private:
     unsigned int knot_id;
@@ -702,7 +703,7 @@ Box3DKnotHolderEntity::knot_set(Geom::Point const &new_pos, Geom::Point const &/
     Geom::Affine const i2dt (item->i2dt_affine ());
 
     Box3D::Axis movement;
-    if ((knot_id < 4) != (state & GDK_SHIFT_MASK)) {
+    if (default_direction_is_xy() != (state & GDK_SHIFT_MASK)) {
         movement = Box3D::XY;
     } else {
         movement = Box3D::Z;
@@ -711,6 +712,11 @@ Box3DKnotHolderEntity::knot_set(Geom::Point const &new_pos, Geom::Point const &/
     box->set_corner (knot_id, s * i2dt, movement, (state & GDK_CONTROL_MASK));
     box->set_z_orders();
     box->position_set();
+}
+
+bool Box3DKnotHolderEntity::default_direction_is_xy() const
+{
+    return knot_id < 4;
 }
 
 class Box3DKnotHolderEntityCenter : public KnotHolderEntity {
@@ -748,59 +754,23 @@ Box3DKnotHolderEntityCenter::knot_set(Geom::Point const &new_pos, Geom::Point co
 Box3DKnotHolder::Box3DKnotHolder(SPDesktop *desktop, SPItem *item)
     : KnotHolder(desktop, item)
 {
-    Box3DKnotHolderEntity *entity_corner0 = new Box3DKnotHolderEntity(0);
-    Box3DKnotHolderEntity *entity_corner1 = new Box3DKnotHolderEntity(1);
-    Box3DKnotHolderEntity *entity_corner2 = new Box3DKnotHolderEntity(2);
-    Box3DKnotHolderEntity *entity_corner3 = new Box3DKnotHolderEntity(3);
-    Box3DKnotHolderEntity *entity_corner4 = new Box3DKnotHolderEntity(4);
-    Box3DKnotHolderEntity *entity_corner5 = new Box3DKnotHolderEntity(5);
-    Box3DKnotHolderEntity *entity_corner6 = new Box3DKnotHolderEntity(6);
-    Box3DKnotHolderEntity *entity_corner7 = new Box3DKnotHolderEntity(7);
+    for (int knot_id = 0; knot_id < 8; ++knot_id) {
+        auto *entity_corner = new Box3DKnotHolderEntity(knot_id);
+        std::string default_direction_str = "in X/Y direction";
+        std::string modified_direction_str = "along the Z axis";
+        if (!entity_corner->default_direction_is_xy()) {
+            std::swap(default_direction_str, modified_direction_str);
+        }
+        entity_corner->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_SHAPER, "Box3D:corner" + std::to_string(knot_id),
+                               Glib::ustring::compose(_("Resize box %1; with <b>Shift</b> %2; with <b>Ctrl</b> to constrain to the directions of edges or diagonals"),
+                                 default_direction_str, modified_direction_str).c_str());
+        entity.push_back(entity_corner);
+    }
+
     Box3DKnotHolderEntityCenter *entity_center = new Box3DKnotHolderEntityCenter();
-
-    entity_corner0->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_SHAPER, "Box3D:corner0",
-                           _("Resize box in X/Y direction; with <b>Shift</b> along the Z axis; "
-                             "with <b>Ctrl</b> to constrain to the directions of edges or diagonals"));
-
-    entity_corner1->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_SHAPER, "Box3D:corner1",
-                           _("Resize box in X/Y direction; with <b>Shift</b> along the Z axis; "
-                             "with <b>Ctrl</b> to constrain to the directions of edges or diagonals"));
-
-    entity_corner2->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_SHAPER, "Box3D:corner2",
-                           _("Resize box in X/Y direction; with <b>Shift</b> along the Z axis; "
-                             "with <b>Ctrl</b> to constrain to the directions of edges or diagonals"));
-
-    entity_corner3->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_SHAPER, "Box3D:corner3",
-                           _("Resize box in X/Y direction; with <b>Shift</b> along the Z axis; "
-                             "with <b>Ctrl</b> to constrain to the directions of edges or diagonals"));
-
-    entity_corner4->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_SHAPER, "Box3D:corner4",
-                     _("Resize box along the Z axis; with <b>Shift</b> in X/Y direction; "
-                       "with <b>Ctrl</b> to constrain to the directions of edges or diagonals"));
-
-    entity_corner5->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_SHAPER, "Box3D:corner5",
-                     _("Resize box along the Z axis; with <b>Shift</b> in X/Y direction; "
-                       "with <b>Ctrl</b> to constrain to the directions of edges or diagonals"));
-
-    entity_corner6->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_SHAPER, "Box3D:corner6",
-                     _("Resize box along the Z axis; with <b>Shift</b> in X/Y direction; "
-                       "with <b>Ctrl</b> to constrain to the directions of edges or diagonals"));
-
-    entity_corner7->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_SHAPER, "Box3D:corner7",
-                     _("Resize box along the Z axis; with <b>Shift</b> in X/Y direction; "
-                       "with <b>Ctrl</b> to constrain to the directions of edges or diagonals"));
-
     entity_center->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_MARKER, "Box3D:center",
                           _("Move the box in perspective"));
 
-    entity.push_back(entity_corner0);
-    entity.push_back(entity_corner1);
-    entity.push_back(entity_corner2);
-    entity.push_back(entity_corner3);
-    entity.push_back(entity_corner4);
-    entity.push_back(entity_corner5);
-    entity.push_back(entity_corner6);
-    entity.push_back(entity_corner7);
     entity.push_back(entity_center);
 
     add_pattern_knotholder();
