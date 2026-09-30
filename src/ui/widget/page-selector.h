@@ -92,10 +92,13 @@ private:
 
     void setDocument(SPDocument *document);
     void pagesChanged(SPPage *new_page);
-    void selectonChanged(SPPage *page);
+    void selectionChanged(SPPage *page);
 
     void nextPage();
     void prevPage();
+
+    Glib::ustring markupForItem(const Glib::RefPtr<Glib::ObjectBase>& item) const;
+    Glib::ustring textForItem(const Glib::RefPtr<Glib::ObjectBase>& item) const;
 
     void setupPageItemCB(  const Glib::RefPtr<Gtk::ListItem>& list_item);
     void renderPageItem(   const Glib::RefPtr<Gtk::ListItem>& list_item);

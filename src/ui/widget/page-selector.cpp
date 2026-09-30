@@ -41,6 +41,11 @@ PageSelector::PageSelector()
     _dropdown.set_tooltip_text(_("Current page"));
     _dropdown.set_size_request(100, -1);
 
+    auto expr = Gtk::ClosureExpression<Glib::ustring>::create(sigc::mem_fun(*this, &PageSelector::textForItem));
+    _dropdown.set_expression(expr);
+    _dropdown.set_search_match_mode(Gtk::StringFilter::MatchMode::SUBSTRING);
+    _dropdown.set_enable_search(true);
+
     auto factory = Gtk::SignalListItemFactory::create();
     factory->signal_setup().connect(  sigc::mem_fun(*this, &PageSelector::setupPageItemCB));
     factory->signal_bind().connect(   sigc::mem_fun(*this, &PageSelector::bindPageItemCB));
@@ -92,7 +97,7 @@ void PageSelector::setDocument(SPDocument *document)
         _pages_changed_connection =
             page_manager.connectPagesChanged(sigc::mem_fun(*this, &PageSelector::pagesChanged));
         _page_selected_connection =
-            page_manager.connectPageSelected(sigc::mem_fun(*this, &PageSelector::selectonChanged));
+            page_manager.connectPageSelected(sigc::mem_fun(*this, &PageSelector::selectionChanged));
         pagesChanged(page_manager.getSelected());
     }
 }
@@ -103,7 +108,6 @@ void PageSelector::pagesChanged(SPPage *new_page)
     _selector_changed_connection.block();
 
     auto &page_manager = _document->getPageManager();
-    auto page = page_manager.getSelected();
 
     // Destroy all existing pages in the model.
     _pageitem_liststore->splice(0, _pageitem_liststore->get_n_items(), {});
@@ -119,12 +123,12 @@ void PageSelector::pagesChanged(SPPage *new_page)
             page_manager.selectPage(page);
         }
     }
-    selectonChanged(page_manager.getSelected());
+    selectionChanged(page_manager.getSelected());
 
     _selector_changed_connection.unblock();
 }
 
-void PageSelector::selectonChanged(SPPage *page)
+void PageSelector::selectionChanged(SPPage *page)
 {
     auto scoped(_update.block());
     _selector_changed_connection.block();
@@ -161,6 +165,41 @@ void PageSelector::prevPage()
     }
 }
 
+// Used for search expressions
+Glib::ustring PageSelector::textForItem(const Glib::RefPtr<Glib::ObjectBase>& item) const
+{
+    auto pageitem = std::dynamic_pointer_cast<PageItem>(item);
+    auto page = pageitem ? pageitem->getPage() : nullptr;
+    if (page && page->getRepr()) {
+        int page_num = page->getPagePosition();
+        if (auto text = page->label()) {
+            return Glib::ustring::compose("%1. %2", page_num, text);
+        } else {
+            return page->getDefaultLabel();
+        }
+    } else {
+        return "⚠️";
+    }
+}
+
+// Used for visible label
+Glib::ustring PageSelector::markupForItem(const Glib::RefPtr<Glib::ObjectBase>& item) const
+{
+    auto pageitem = std::dynamic_pointer_cast<PageItem>(item);
+    auto page = pageitem ? pageitem->getPage() : nullptr;
+    if (page && page->getRepr()) {
+        int page_num = page->getPagePosition();
+        if (auto text = page->label()) {
+            auto escaped_text = Glib::Markup::escape_text(text);
+            return Glib::ustring::compose("<span size=\"smaller\"><tt>%1.</tt>%2</span>", page_num, escaped_text);
+        } else {
+            return Glib::ustring::compose("<span size=\"smaller\"><i>%1</i></span>", page->getDefaultLabel());
+        }
+    } else {
+        return "⚠️";
+    }
+}
+
 void PageSelector::setupPageItemCB(const Glib::RefPtr<Gtk::ListItem>& list_item) {
     auto label = Gtk::make_managed<Gtk::Label>();
     label->set_halign(Gtk::Align::START);
@@ -172,24 +211,8 @@ void PageSelector::setupPageItemCB(const Glib::RefPtr<Gtk::ListItem>& list_item)
 
 void PageSelector::renderPageItem(const Glib::RefPtr<Gtk::ListItem>& list_item) {
     auto item = list_item->get_item();
-    if (auto pageitem = std::dynamic_pointer_cast<PageItem>(item)) {
-        auto page = pageitem->getPage();
-        Glib::ustring markup;
-        if (page && page->getRepr()) {
-            int page_num = page->getPagePosition();
-            if (auto text = page->label()) {
-                auto escaped_text = Glib::Markup::escape_text(text);
-                markup = Glib::ustring::compose("<span size=\"smaller\"><tt>%1.</tt>%2</span>", page_num, escaped_text);
-            } else {
-                markup = Glib::ustring::compose("<span size=\"smaller\"><i>%1</i></span>", page->getDefaultLabel());
-            }
-        } else {
-            markup = "⚠️";
-        }
-
-        if (auto label = dynamic_cast<Gtk::Label*>(list_item->get_child())) {
-            label->set_markup(markup);
-        }
+    if (auto label = dynamic_cast<Gtk::Label*>(list_item->get_child())) {
+        label->set_markup(markupForItem(item));
     }
 }
 
