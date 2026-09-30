@@ -521,6 +521,7 @@ protected:
     std::unordered_map<SPObject*, sigc::connection> _releaseConnections;
 
 private:
+    void _pathBoolOpIterative(BooleanOp bop, char const *icon_name, Inkscape::Util::Internal::ContextString description, bool skip_undo, bool silent);
     void _pathBoolOp(BooleanOp bop, char const *icon_name, Inkscape::Util::Internal::ContextString description, bool skip_undo, bool silent);
     void _pathBoolOp(BooleanOp bop);
 
