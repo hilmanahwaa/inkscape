@@ -673,15 +673,17 @@ RectKnotHolder::RectKnotHolder(SPDesktop *desktop, SPItem *item)
 
 class Box3DKnotHolderEntity : public KnotHolderEntity {
 public:
-    Geom::Point knot_get() const override = 0;
-    void knot_set(Geom::Point const &p, Geom::Point const &origin, unsigned int state) override = 0;
+    Box3DKnotHolderEntity(unsigned int knot_id) : knot_id(knot_id) {}
+    Geom::Point knot_get() const override;
+    void knot_set(Geom::Point const &p, Geom::Point const &origin, unsigned int state) override;
+    void knot_ungrabbed(Geom::Point const &p, Geom::Point const &origin, guint state) override {};
 
-    Geom::Point knot_get_generic(SPItem *item, unsigned int knot_id) const;
-    void knot_set_generic(SPItem *item, unsigned int knot_id, Geom::Point const &p, unsigned int state);
+private:
+    unsigned int knot_id;
 };
 
 Geom::Point
-Box3DKnotHolderEntity::knot_get_generic(SPItem *item, unsigned int knot_id) const
+Box3DKnotHolderEntity::knot_get() const
 {
     if (auto box = cast<SPBox3D>(item)) {
         return box->get_corner_screen(knot_id);
@@ -690,7 +692,7 @@ Box3DKnotHolderEntity::knot_get_generic(SPItem *item, unsigned int knot_id) cons
 }
 
 void
-Box3DKnotHolderEntity::knot_set_generic(SPItem *item, unsigned int knot_id, Geom::Point const &new_pos, unsigned int state)
+Box3DKnotHolderEntity::knot_set(Geom::Point const &new_pos, Geom::Point const &/*origin*/, unsigned int state)
 {
     Geom::Point const s = snap_knot_position(new_pos, state);
 
@@ -711,62 +713,6 @@ Box3DKnotHolderEntity::knot_set_generic(SPItem *item, unsigned int knot_id, Geom
     box->position_set();
 }
 
-class Box3DKnotHolderEntity0 : public Box3DKnotHolderEntity {
-public:
-    Geom::Point knot_get() const override;
-    void knot_ungrabbed(Geom::Point const &p, Geom::Point const &origin, guint state) override {};
-    void knot_set(Geom::Point const &p, Geom::Point const &origin, unsigned int state) override;
-};
-
-class Box3DKnotHolderEntity1 : public Box3DKnotHolderEntity {
-public:
-    Geom::Point knot_get() const override;
-    void knot_ungrabbed(Geom::Point const &p, Geom::Point const &origin, guint state) override {};
-    void knot_set(Geom::Point const &p, Geom::Point const &origin, unsigned int state) override;
-};
-
-class Box3DKnotHolderEntity2 : public Box3DKnotHolderEntity {
-public:
-    Geom::Point knot_get() const override;
-    void knot_ungrabbed(Geom::Point const &p, Geom::Point const &origin, guint state) override {};
-    void knot_set(Geom::Point const &p, Geom::Point const &origin, unsigned int state) override;
-};
-
-class Box3DKnotHolderEntity3 : public Box3DKnotHolderEntity {
-public:
-    Geom::Point knot_get() const override;
-    void knot_ungrabbed(Geom::Point const &p, Geom::Point const &origin, guint state) override {};
-    void knot_set(Geom::Point const &p, Geom::Point const &origin, unsigned int state) override;
-};
-
-class Box3DKnotHolderEntity4 : public Box3DKnotHolderEntity {
-public:
-    Geom::Point knot_get() const override;
-    void knot_ungrabbed(Geom::Point const &p, Geom::Point const &origin, guint state) override {};
-    void knot_set(Geom::Point const &p, Geom::Point const &origin, unsigned int state) override;
-};
-
-class Box3DKnotHolderEntity5 : public Box3DKnotHolderEntity {
-public:
-    Geom::Point knot_get() const override;
-    void knot_ungrabbed(Geom::Point const &p, Geom::Point const &origin, guint state) override {};
-    void knot_set(Geom::Point const &p, Geom::Point const &origin, unsigned int state) override;
-};
-
-class Box3DKnotHolderEntity6 : public Box3DKnotHolderEntity {
-public:
-    Geom::Point knot_get() const override;
-    void knot_ungrabbed(Geom::Point const &p, Geom::Point const &origin, guint state) override {};
-    void knot_set(Geom::Point const &p, Geom::Point const &origin, unsigned int state) override;
-};
-
-class Box3DKnotHolderEntity7 : public Box3DKnotHolderEntity {
-public:
-    Geom::Point knot_get() const override;
-    void knot_ungrabbed(Geom::Point const &p, Geom::Point const &origin, guint state) override {};
-    void knot_set(Geom::Point const &p, Geom::Point const &origin, unsigned int state) override;
-};
-
 class Box3DKnotHolderEntityCenter : public KnotHolderEntity {
 public:
     Geom::Point knot_get() const override;
@@ -775,108 +721,12 @@ public:
 };
 
 Geom::Point
-Box3DKnotHolderEntity0::knot_get() const
-{
-    return knot_get_generic(item, 0);
-}
-
-Geom::Point
-Box3DKnotHolderEntity1::knot_get() const
-{
-    return knot_get_generic(item, 1);
-}
-
-Geom::Point
-Box3DKnotHolderEntity2::knot_get() const
-{
-    return knot_get_generic(item, 2);
-}
-
-Geom::Point
-Box3DKnotHolderEntity3::knot_get() const
-{
-    return knot_get_generic(item, 3);
-}
-
-Geom::Point
-Box3DKnotHolderEntity4::knot_get() const
-{
-    return knot_get_generic(item, 4);
-}
-
-Geom::Point
-Box3DKnotHolderEntity5::knot_get() const
-{
-    return knot_get_generic(item, 5);
-}
-
-Geom::Point
-Box3DKnotHolderEntity6::knot_get() const
-{
-    return knot_get_generic(item, 6);
-}
-
-Geom::Point
-Box3DKnotHolderEntity7::knot_get() const
-{
-    return knot_get_generic(item, 7);
-}
-
-Geom::Point
 Box3DKnotHolderEntityCenter::knot_get() const
 {
     if (auto box = cast<SPBox3D>(item)) {
         return box->get_center_screen();
     }
     return Geom::Point(); // TODO investigate proper fallback
-}
-
-void
-Box3DKnotHolderEntity0::knot_set(Geom::Point const &new_pos, Geom::Point const &/*origin*/, unsigned int state)
-{
-    knot_set_generic(item, 0, new_pos, state);
-}
-
-void
-Box3DKnotHolderEntity1::knot_set(Geom::Point const &new_pos, Geom::Point const &/*origin*/, unsigned int state)
-{
-    knot_set_generic(item, 1, new_pos, state);
-}
-
-void
-Box3DKnotHolderEntity2::knot_set(Geom::Point const &new_pos, Geom::Point const &/*origin*/, unsigned int state)
-{
-    knot_set_generic(item, 2, new_pos, state);
-}
-
-void
-Box3DKnotHolderEntity3::knot_set(Geom::Point const &new_pos, Geom::Point const &/*origin*/, unsigned int state)
-{
-    knot_set_generic(item, 3, new_pos, state);
-}
-
-void
-Box3DKnotHolderEntity4::knot_set(Geom::Point const &new_pos, Geom::Point const &/*origin*/, unsigned int state)
-{
-    knot_set_generic(item, 4, new_pos, state);
-}
-
-void
-Box3DKnotHolderEntity5::knot_set(Geom::Point const &new_pos, Geom::Point const &/*origin*/, unsigned int state)
-{
-    knot_set_generic(item, 5, new_pos, state);
-}
-
-void
-Box3DKnotHolderEntity6::knot_set(Geom::Point const &new_pos, Geom::Point const &/*origin*/, unsigned int state)
-{
-    knot_set_generic(item, 6, new_pos, state);
-}
-
-void
-Box3DKnotHolderEntity7::knot_set(Geom::Point const &new_pos, Geom::Point const &/*origin*/, unsigned int state)
-{
-    knot_set_generic(item, 7, new_pos, state);
 }
 
 void
@@ -898,14 +748,14 @@ Box3DKnotHolderEntityCenter::knot_set(Geom::Point const &new_pos, Geom::Point co
 Box3DKnotHolder::Box3DKnotHolder(SPDesktop *desktop, SPItem *item)
     : KnotHolder(desktop, item)
 {
-    Box3DKnotHolderEntity0 *entity_corner0 = new Box3DKnotHolderEntity0();
-    Box3DKnotHolderEntity1 *entity_corner1 = new Box3DKnotHolderEntity1();
-    Box3DKnotHolderEntity2 *entity_corner2 = new Box3DKnotHolderEntity2();
-    Box3DKnotHolderEntity3 *entity_corner3 = new Box3DKnotHolderEntity3();
-    Box3DKnotHolderEntity4 *entity_corner4 = new Box3DKnotHolderEntity4();
-    Box3DKnotHolderEntity5 *entity_corner5 = new Box3DKnotHolderEntity5();
-    Box3DKnotHolderEntity6 *entity_corner6 = new Box3DKnotHolderEntity6();
-    Box3DKnotHolderEntity7 *entity_corner7 = new Box3DKnotHolderEntity7();
+    Box3DKnotHolderEntity *entity_corner0 = new Box3DKnotHolderEntity(0);
+    Box3DKnotHolderEntity *entity_corner1 = new Box3DKnotHolderEntity(1);
+    Box3DKnotHolderEntity *entity_corner2 = new Box3DKnotHolderEntity(2);
+    Box3DKnotHolderEntity *entity_corner3 = new Box3DKnotHolderEntity(3);
+    Box3DKnotHolderEntity *entity_corner4 = new Box3DKnotHolderEntity(4);
+    Box3DKnotHolderEntity *entity_corner5 = new Box3DKnotHolderEntity(5);
+    Box3DKnotHolderEntity *entity_corner6 = new Box3DKnotHolderEntity(6);
+    Box3DKnotHolderEntity *entity_corner7 = new Box3DKnotHolderEntity(7);
     Box3DKnotHolderEntityCenter *entity_center = new Box3DKnotHolderEntityCenter();
 
     entity_corner0->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_SHAPER, "Box3D:corner0",
