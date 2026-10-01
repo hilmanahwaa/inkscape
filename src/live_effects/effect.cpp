@@ -1519,7 +1519,13 @@ void Effect::doOnRemove_impl(SPLPEItem const* lpeitem)
     }
 
     doOnRemove(sp_lpe_item);
-    getLPEObj()->deleted = true;
+    auto const lpe_object = getLPEObj();
+    lpe_object->deleted = true;
+
+    // Remove the effect definition from defs
+    if (auto const element_ref = document->getObjectByRepr(lpe_object->getRepr())) {
+        element_ref->deleteObject();
+    }
 }
 
 /**
