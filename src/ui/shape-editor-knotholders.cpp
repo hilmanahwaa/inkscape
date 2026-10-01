@@ -680,10 +680,12 @@ public:
     bool default_direction_is_xy() const;
 
     std::string get_modconfine_label() const { return mod_trans_confine->get_label(); }
+    std::string get_modchangedir_label() const { return mod_change_direction->get_label(); }
 
 private:
     unsigned int knot_id;
     Modifiers::Modifier *mod_trans_confine = Modifiers::Modifier::get(Modifiers::Type::TRANS_CONFINE);
+    Modifiers::Modifier *mod_change_direction = Modifiers::Modifier::get(Modifiers::Type::BOX3D_CHANGE_KNOT_DIRECTION);
 };
 
 Geom::Point
@@ -706,7 +708,7 @@ Box3DKnotHolderEntity::knot_set(Geom::Point const &new_pos, Geom::Point const &/
     Geom::Affine const i2dt (item->i2dt_affine ());
 
     Box3D::Axis movement;
-    if (default_direction_is_xy() != (state & GDK_SHIFT_MASK)) {
+    if (default_direction_is_xy() != mod_change_direction->active(state)) {
         movement = Box3D::XY;
     } else {
         movement = Box3D::Z;
@@ -730,6 +732,7 @@ public:
 
 private:
     Modifiers::Modifier *mod_trans_confine = Modifiers::Modifier::get(Modifiers::Type::TRANS_CONFINE);
+    Modifiers::Modifier *mod_change_direction = Modifiers::Modifier::get(Modifiers::Type::BOX3D_CHANGE_KNOT_DIRECTION);
 };
 
 Geom::Point
@@ -750,7 +753,7 @@ Box3DKnotHolderEntityCenter::knot_set(Geom::Point const &new_pos, Geom::Point co
     g_assert(box != nullptr);
     Geom::Affine const i2dt (item->i2dt_affine ());
 
-    box->set_center(s * i2dt, origin * i2dt, !(state & GDK_SHIFT_MASK) ? Box3D::XY : Box3D::Z,
+    box->set_center(s * i2dt, origin * i2dt, !mod_change_direction->active(state) ? Box3D::XY : Box3D::Z,
                     mod_trans_confine->active(state));
 
     box->set_z_orders();
@@ -768,9 +771,9 @@ Box3DKnotHolder::Box3DKnotHolder(SPDesktop *desktop, SPItem *item)
             std::swap(default_direction_str, modified_direction_str);
         }
         entity_corner->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_SHAPER, "Box3D:corner" + std::to_string(knot_id),
-            Glib::ustring::compose(_("Resize box %1; with <b>Shift</b> %2; with <b>%3</b> to constrain to the directions of edges or diagonals")
-                , default_direction_str, modified_direction_str, entity_corner->get_modconfine_label())
-                .c_str());
+                           Glib::ustring::compose(_("Resize box %1; with <b>%2</b> %3; with <b>%4</b> to constrain to the directions of edges or diagonals")
+                               , default_direction_str,  entity_corner->get_modchangedir_label(), modified_direction_str, entity_corner->get_modconfine_label())
+                               .c_str());
         entity.push_back(entity_corner);
     }
 
