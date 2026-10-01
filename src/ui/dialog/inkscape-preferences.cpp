@@ -3280,6 +3280,7 @@ void InkscapePreferences::initKeyboardShortcuts(Gtk::TreeModel::iterator iter_ui
     _kb_shortcut_renderer.property_editable() = true;
 
     _kb_tree.set_model(_kb_filter);
+    _kb_tree.set_name("_kb_tree");
     _kb_tree.append_column(_("Name"), _kb_columns.name);
     _kb_tree.append_column(_("Shortcut"), _kb_shortcut_renderer);
     _kb_tree.append_column(_("Description"), _kb_columns.description);
@@ -3316,6 +3317,7 @@ void InkscapePreferences::initKeyboardShortcuts(Gtk::TreeModel::iterator iter_ui
 
     _kb_notebook.append_page(_kb_page_shortcuts, _("Shortcuts"));
     auto const shortcut_scroller = Gtk::make_managed<Gtk::ScrolledWindow>();
+    shortcut_scroller->set_name("shortcut_scroller");
     shortcut_scroller->set_child(_kb_tree);
     shortcut_scroller->set_hexpand();
     shortcut_scroller->set_vexpand();
@@ -3328,6 +3330,7 @@ void InkscapePreferences::initKeyboardShortcuts(Gtk::TreeModel::iterator iter_ui
     _kb_page_shortcuts.attach(*shortcut_scroller, 0, 3, 2, 1);
 
     _mod_store = Gtk::TreeStore::create( _mod_columns );
+    _mod_tree.set_name("_mod_tree");
     _mod_tree.set_model(_mod_store);
     _mod_tree.append_column(_("Name"), _mod_columns.name);
     _mod_tree.append_column("hot", _mod_columns.and_modifiers);
@@ -3347,6 +3350,7 @@ void InkscapePreferences::initKeyboardShortcuts(Gtk::TreeModel::iterator iter_ui
     _kb_mod_alt.set_label("Alt");
     _kb_mod_meta.set_label("Meta");
     _kb_mod_enabled.set_label(_("Enabled"));
+    edit_bar->set_name("edit_bar");
     edit_bar->append(_kb_mod_ctrl);
     edit_bar->append(_kb_mod_shift);
     edit_bar->append(_kb_mod_alt);
@@ -3364,6 +3368,7 @@ void InkscapePreferences::initKeyboardShortcuts(Gtk::TreeModel::iterator iter_ui
 
     _kb_notebook.append_page(_kb_page_modifiers, _("Tools Modifiers"));
     auto const mod_scroller = Gtk::make_managed<Gtk::ScrolledWindow>();
+    mod_scroller->set_name("mod_scroller");
     mod_scroller->set_child(_mod_tree);
     mod_scroller->set_hexpand();
     mod_scroller->set_vexpand();
@@ -3778,7 +3783,7 @@ void InkscapePreferences::onKBListKeyboardShortcuts()
             iter_mod_group = _mod_store->append();
             (*iter_mod_group)[_mod_columns.name] = cat_name.empty() ? "" : _(cat_name.c_str());
             (*iter_mod_group)[_mod_columns.id] = "";
-            (*iter_mod_group)[_mod_columns.description] = "";
+            //(*iter_mod_group)[_mod_columns.description] = ""; Don't set or an empty tootip will be shown!
             (*iter_mod_group)[_mod_columns.and_modifiers] = "";
             (*iter_mod_group)[_mod_columns.user_set] = 0;
             old_mod_group = cat_name;
