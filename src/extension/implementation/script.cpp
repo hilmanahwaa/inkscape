@@ -935,12 +935,14 @@ int Script::execute(std::list<std::string> const &in_command, std::list<std::str
     }
 
     Glib::ustring stderr_data = fileerr.string();
-    if (!stderr_data.empty() && !ignore_stderr) {
-        if (INKSCAPE.use_gui()) {
+    if (!stderr_data.empty()) {
+        // If we are using a GUI, flag the error to the user if asked, otherwise just print to the console for help
+        // when debugging / reporting a bug. (Unless we are in non-GUI mode, in which case we only print if asked.)
+        if (INKSCAPE.use_gui() && !ignore_stderr) {
             showPopupError(stderr_data, Gtk::MessageType::INFO,
                                  _("Inkscape has received additional data from the script executed.  "
                                    "The script did not return an error, but this may indicate the results will not be as expected."));
-        } else {
+        } else if (INKSCAPE.use_gui() || !ignore_stderr) {
             std::cerr << "Script Error\n----\n" << stderr_data.c_str() << "\n----\n";
         }
     }
