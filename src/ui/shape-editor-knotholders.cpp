@@ -1434,20 +1434,20 @@ MarkerKnotHolder::MarkerKnotHolder(SPDesktop *desktop, SPItem *item, double edit
 
 /* SPArc */
 
-class ArcKnotHolderEntityStart : public KnotHolderEntity {
+class ArcKnotHolderEntityExtremity : public KnotHolderEntity
+{
 public:
+    ArcKnotHolderEntityExtremity(int is_start_knot) : is_start_knot(is_start_knot) {}
     Geom::Point knot_get() const override;
     void knot_set(Geom::Point const &p, Geom::Point const &origin, unsigned int state) override;
     void knot_ungrabbed(Geom::Point const &p, Geom::Point const &origin, guint state) override {};
     void knot_click(unsigned int state) override;
-};
 
-class ArcKnotHolderEntityEnd : public KnotHolderEntity {
-public:
-    Geom::Point knot_get() const override;
-    void knot_set(Geom::Point const &p, Geom::Point const &origin, unsigned int state) override;
-    void knot_ungrabbed(Geom::Point const &p, Geom::Point const &origin, guint state) override {};
-    void knot_click(unsigned int state) override;
+private:
+    double& get_holded_extremity() const;
+    double& get_other_extremity() const;
+
+    bool is_start_knot;
 };
 
 class ArcKnotHolderEntityRX : public KnotHolderEntity {
@@ -1505,7 +1505,7 @@ sp_genericellipse_side(SPGenericEllipse *ellipse, Geom::Point const &p)
 }
 
 void
-ArcKnotHolderEntityStart::knot_set(Geom::Point const &p, Geom::Point const &/*origin*/, unsigned int state)
+ArcKnotHolderEntityExtremity::knot_set(Geom::Point const &p, Geom::Point const &/*origin*/, unsigned int state)
 {
     double snaps = Inkscape::Preferences::get()->getDoubleLimited("/options/rotationsnapsperpi/value", 12.0, 0.1, 1800.0);
 
@@ -1520,85 +1520,51 @@ ArcKnotHolderEntityStart::knot_set(Geom::Point const &p, Geom::Point const &/*or
     Geom::Point delta = p - Geom::Point(arc->cx.computed, arc->cy.computed);
     Geom::Scale sc(arc->rx.computed, arc->ry.computed);
 
-    double offset = arc->start - atan2(delta * sc.inverse());
-    arc->start -= offset;
-
-    if ((state & GDK_CONTROL_MASK) && snaps) {
-        double snaps_radian = M_PI / snaps;
-        arc->start = std::round(arc->start / snaps_radian) * snaps_radian;
-    }
-    if (state & GDK_SHIFT_MASK) {
-        arc->end -= offset;
-    }
-
-    arc->normalize();
-    arc->requestDisplayUpdate(SP_OBJECT_MODIFIED_FLAG);
-}
-
-Geom::Point
-ArcKnotHolderEntityStart::knot_get() const
-{
-    SPGenericEllipse const *ge = cast<SPGenericEllipse>(item);
-    g_assert(ge != nullptr);
-
-    return ge->getPointAtAngle(ge->start);
-}
-
-void
-ArcKnotHolderEntityStart::knot_click(unsigned int state)
-{
-    auto ge = cast<SPGenericEllipse>(item);
-    g_assert(ge != nullptr);
-
-    if (state & GDK_SHIFT_MASK) {
-        ge->end = ge->start = 0;
-        ge->updateRepr();
-    }
-}
-
-void
-ArcKnotHolderEntityEnd::knot_set(Geom::Point const &p, Geom::Point const &/*origin*/, unsigned int state)
-{
-    double snaps = Inkscape::Preferences::get()->getDoubleLimited("/options/rotationsnapsperpi/value", 12.0, 0.1, 1800.0);
-
-    auto arc = cast<SPGenericEllipse>(item);
-    g_assert(arc != nullptr);
-
-    gint side = sp_genericellipse_side(arc, p);
-    if(side != 0) { arc->setArcType( (side == -1) ?
-                                     SP_GENERIC_ELLIPSE_ARC_TYPE_SLICE :
-                                     SP_GENERIC_ELLIPSE_ARC_TYPE_ARC); }
-
-    Geom::Point delta = p - Geom::Point(arc->cx.computed, arc->cy.computed);
-    Geom::Scale sc(arc->rx.computed, arc->ry.computed);
-
-    double offset = arc->end - atan2(delta * sc.inverse());
-    arc->end -= offset;
+    double offset = get_holded_extremity() - atan2(delta * sc.inverse());
+    get_holded_extremity() -= offset;
 
     if ((state & GDK_CONTROL_MASK) && snaps) {
         double snaps_radian = M_PI/snaps;
-        arc->end = std::round(arc->end/snaps_radian) * snaps_radian;
+        get_holded_extremity() = std::round(get_holded_extremity()/snaps_radian) * snaps_radian;
     }
     if (state & GDK_SHIFT_MASK) {
-        arc->start -= offset;
+        get_other_extremity() -= offset;
     }
 
     arc->normalize();
     arc->requestDisplayUpdate(SP_OBJECT_MODIFIED_FLAG);
 }
 
-Geom::Point
-ArcKnotHolderEntityEnd::knot_get() const
+double&
+ArcKnotHolderEntityExtremity::get_holded_extremity() const
 {
-    SPGenericEllipse const *ge = cast<SPGenericEllipse>(item);
-    g_assert(ge != nullptr);
+    auto arc = cast<SPGenericEllipse>(item);
+    g_assert(arc != nullptr);
 
-    return ge->getPointAtAngle(ge->end);
+    return is_start_knot ? arc->start : arc->end;
+}
+
+double&
+ArcKnotHolderEntityExtremity::get_other_extremity() const
+{
+    auto arc = cast<SPGenericEllipse>(item);
+    g_assert(arc != nullptr);
+
+    return is_start_knot ? arc->end : arc->start;
 }
 
 
+Geom::Point
+ArcKnotHolderEntityExtremity::knot_get() const
+{
+    SPGenericEllipse *ge = cast<SPGenericEllipse>(item);
+    g_assert(ge != nullptr);
+
+    return ge->getPointAtAngle(get_holded_extremity());
+}
+
 void
-ArcKnotHolderEntityEnd::knot_click(unsigned int state)
+ArcKnotHolderEntityExtremity::knot_click(unsigned int state)
 {
     auto ge = cast<SPGenericEllipse>(item);
     g_assert(ge != nullptr);
@@ -1608,7 +1574,6 @@ ArcKnotHolderEntityEnd::knot_click(unsigned int state)
         ge->updateRepr();
     }
 }
-
 
 void
 ArcKnotHolderEntityRX::knot_set(Geom::Point const &p, Geom::Point const &/*origin*/, unsigned int state)
@@ -1714,8 +1679,8 @@ ArcKnotHolder::ArcKnotHolder(SPDesktop *desktop, SPItem *item)
 {
     ArcKnotHolderEntityRX *entity_rx = new ArcKnotHolderEntityRX();
     ArcKnotHolderEntityRY *entity_ry = new ArcKnotHolderEntityRY();
-    ArcKnotHolderEntityStart *entity_start = new ArcKnotHolderEntityStart();
-    ArcKnotHolderEntityEnd *entity_end = new ArcKnotHolderEntityEnd();
+    ArcKnotHolderEntityExtremity *entity_start = new ArcKnotHolderEntityExtremity(true);
+    ArcKnotHolderEntityExtremity *entity_end = new ArcKnotHolderEntityExtremity(false);
     ArcKnotHolderEntityCenter *entity_center = new ArcKnotHolderEntityCenter();
 
     entity_rx->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_SIZER, "Arc:rx",
