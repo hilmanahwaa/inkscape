@@ -188,6 +188,10 @@ Cairo::RefPtr<Cairo::Surface> DashSelector::sp_dash_to_pixbuf(const std::vector<
 
     auto const fg = get_foreground_color(get_style_context());
 
+    if (pattern.size() == 2 && pattern[0] == 0.0) {
+        cairo_set_line_cap(ct, CAIRO_LINE_CAP_ROUND);
+    }
+
     cairo_set_line_width (ct, _preview_lineheight * device_scale);
     cairo_scale (ct, _preview_lineheight * device_scale, 1);
     cairo_move_to (ct, 0, height/2);

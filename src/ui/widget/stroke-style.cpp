@@ -950,6 +950,11 @@ StrokeStyle::setScaledDash(SPCSSAttr *css,
         Inkscape::CSSOStringStream osoffset;
         osoffset << offset * scale;
         sp_repr_css_set_property(css, "stroke-dashoffset", osoffset.str().c_str());
+
+        // Special handling of a zero dash, add round linecaps
+        if (ndash == 2 && dash[0] == 0.0) {
+            sp_repr_css_set_property(css, "stroke-linecap", "round");
+        }
     } else {
         sp_repr_css_set_property(css, "stroke-dasharray", "none");
         sp_repr_css_set_property(css, "stroke-dashoffset", nullptr);
