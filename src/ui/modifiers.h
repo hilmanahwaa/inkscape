@@ -40,7 +40,7 @@ enum Triggers : Trigger {
     NODE_TOOL, BOOLEANS_TOOL, BOX3D_TOOL, CALLI_TOOL,
     DROPPER_TOOL, FLOOD_TOOL, SPIRAL_TOOL, STAR_TOOL,
     TWEAK_TOOL, GRADIENT_TOOL, MEASURE_TOOL, PENCIL_TOOL,
-    PEN_TOOL,
+    PEN_TOOL, ARC_TOOL,
     // Action taken to trigger this modifier, starts at
     // bit 6 so categories and triggers can be combined.
     CLICK = 32,
@@ -78,6 +78,9 @@ enum class Type {
     SELECT_CYCLE,         // Cycle through objects under cursor {ALT+SCROLL}
     SELECT_DUPLICATE,     // Duplicate selection when starting a drag {ALT+DRAG+Selected} unassigned by default
     SELECT_REMOVE_SNAP,   // Remove snap target during a drag {SHIFT+ALT+DRAG+Selected}
+
+    // Arc tool
+    ARC_MAINTAIN_GAP,     // Move both the start and end knots {SHIFT+DRAG}
 
     // Transform handles (applies to multiple tools)
     MOVE_CONFINE,         // Limit dragging to X OR Y only {DRAG+CTRL}

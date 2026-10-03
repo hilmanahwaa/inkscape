@@ -1444,6 +1444,7 @@ public:
     void knot_click(unsigned int state) override;
 
     std::string get_mod_moveinc_label() const { return mod_move_increment->get_label(); }
+    std::string get_mod_maintaingap_label() const { return mod_maintain_gap->get_label(); }
 
 private:
     double& get_holded_extremity() const;
@@ -1451,6 +1452,7 @@ private:
 
     bool is_start_knot;
     Modifiers::Modifier *mod_move_increment = Modifiers::Modifier::get(Modifiers::Type::MOVE_INCREMENT);
+    Modifiers::Modifier *mod_maintain_gap   = Modifiers::Modifier::get(Modifiers::Type::ARC_MAINTAIN_GAP);
 };
 
 class ArcKnotHolderEntityRX : public KnotHolderEntity {
@@ -1532,7 +1534,7 @@ ArcKnotHolderEntityExtremity::knot_set(Geom::Point const &p, Geom::Point const &
         get_holded_extremity() = std::round(get_holded_extremity()/snaps_radian) * snaps_radian;
         offset = extremity_initial_position - get_holded_extremity();
     }
-    if (state & GDK_SHIFT_MASK) {
+    if (mod_maintain_gap->active(state)) {
         get_other_extremity() -= offset;
     }
 
@@ -1697,13 +1699,13 @@ ArcKnotHolder::ArcKnotHolder(SPDesktop *desktop, SPItem *item)
                              .c_str()));
 
     entity_start->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_ROTATE, "Arc:start",
-                         _(("Position the <b>start point</b> of the arc or segment; with <b>Shift</b> to move "
+                         _(("Position the <b>start point</b> of the arc or segment; with <b>" + entity_start->get_mod_maintaingap_label() + "</b> to move "
                            "with <b>end point</b>; with <b>" + entity_start->get_mod_moveinc_label() + "</b> to snap angle; drag <b>inside</b> the "
                            "ellipse for arc, <b>outside</b> for segment")
                            .c_str()));
 
     entity_end->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_ROTATE, "Arc:end",
-                       _(("Position the <b>end point</b> of the arc or segment; with <b>Shift</b> to move "
+                       _(("Position the <b>end point</b> of the arc or segment; with <b>" + entity_end->get_mod_maintaingap_label() + "</b> to move "
                          "with <b>start point</b>; with <b>" + entity_end->get_mod_moveinc_label() + "</b> to snap angle; drag <b>inside</b> the "
                          "ellipse for arc, <b>outside</b> for segment")
                          .c_str()));

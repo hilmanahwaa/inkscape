@@ -49,6 +49,7 @@ ModifierIdToTypeMap const &modifier_type_from_id()
         {"select-cycle", Type::SELECT_CYCLE},
         {"select-duplicate", Type::SELECT_DUPLICATE},
         {"select-remove-snap", Type::SELECT_REMOVE_SNAP},
+        {"arc-maintain-gap", Type::ARC_MAINTAIN_GAP},
         {"move-confine", Type::MOVE_CONFINE},
         {"move-increment", Type::MOVE_INCREMENT},
         {"move-snapping", Type::MOVE_NO_SNAPPING}, // name is move-snapping for historical reasons
@@ -155,6 +156,9 @@ Modifier::Container &Modifier::_modifiers()
         make_modifier("select-duplicate", _("Duplicate selection on drag"), _("Duplicate selection when starting a drag"), NEVER, SELECT, DRAG),
         make_modifier("select-remove-snap", _("Remove snap target"), _("Remove snap target during a drag"), SHIFT | ALT, SELECT, DRAG),
 
+    // Arc tool modifier
+        make_modifier("arc-maintain-gap", _("Maintain gap"), _("Move both start and end knot of the arc"), SHIFT, ARC_TOOL, DRAG),
+
     // Transform handle modifiers (applies to multiple tools)
         make_modifier("move-confine", _("Move one axis only"), _("When dragging items, confine to either x or y axis"), CTRL, MOVE, DRAG),
         make_modifier("move-increment", _("Move in increments"), _("Move the objects by increments of grid pitch when dragging"), NEVER, MOVE, DRAG),
@@ -232,6 +236,7 @@ Modifier::CategoryNames const &Modifier::_category_names()
         {TRANSFORM, _("Transformations")},
         {NODE_TOOL, _("Node Tool")},
         {BOOLEANS_TOOL, _("Shape Builder")},
+        {ARC_TOOL, _("Ellipse/Arc Tool")},
         {BOX3D_TOOL, _("3D Box Tool")},
         {CALLI_TOOL, _("Calligraphy Tool")},
         {DROPPER_TOOL, _("Dropper Tool")},
