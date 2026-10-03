@@ -1520,12 +1520,14 @@ ArcKnotHolderEntityExtremity::knot_set(Geom::Point const &p, Geom::Point const &
     Geom::Point delta = p - Geom::Point(arc->cx.computed, arc->cy.computed);
     Geom::Scale sc(arc->rx.computed, arc->ry.computed);
 
-    double offset = get_holded_extremity() - atan2(delta * sc.inverse());
+    double extremity_initial_position = get_holded_extremity();
+    double offset = extremity_initial_position - atan2(delta * sc.inverse());
     get_holded_extremity() -= offset;
 
     if ((state & GDK_CONTROL_MASK) && snaps) {
         double snaps_radian = M_PI/snaps;
         get_holded_extremity() = std::round(get_holded_extremity()/snaps_radian) * snaps_radian;
+        offset = extremity_initial_position - get_holded_extremity();
     }
     if (state & GDK_SHIFT_MASK) {
         get_other_extremity() -= offset;
