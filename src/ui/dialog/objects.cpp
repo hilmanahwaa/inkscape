@@ -1066,7 +1066,9 @@ bool ObjectsPanel::showChildInTree(SPItem *item) {
     if (show_child && term.length()) {
         // A source document allows search for different pieces of metadata
         std::stringstream source;
-        source << "#" << item->getId();
+        if (char const *id = item->getId()) {
+            source << "#" << id;
+        }
         if (auto label = item->label())
             source << " " << label;
         source << " @" << item->getTagName();
