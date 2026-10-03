@@ -1443,11 +1443,14 @@ public:
     void knot_ungrabbed(Geom::Point const &p, Geom::Point const &origin, guint state) override {};
     void knot_click(unsigned int state) override;
 
+    std::string get_mod_moveinc_label() const { return mod_move_increment->get_label(); }
+
 private:
     double& get_holded_extremity() const;
     double& get_other_extremity() const;
 
     bool is_start_knot;
+    Modifiers::Modifier *mod_move_increment = Modifiers::Modifier::get(Modifiers::Type::MOVE_INCREMENT);
 };
 
 class ArcKnotHolderEntityRX : public KnotHolderEntity {
@@ -1524,7 +1527,7 @@ ArcKnotHolderEntityExtremity::knot_set(Geom::Point const &p, Geom::Point const &
     double offset = extremity_initial_position - atan2(delta * sc.inverse());
     get_holded_extremity() -= offset;
 
-    if ((state & GDK_CONTROL_MASK) && snaps) {
+    if (mod_move_increment->active(state) && snaps) {
         double snaps_radian = M_PI/snaps;
         get_holded_extremity() = std::round(get_holded_extremity()/snaps_radian) * snaps_radian;
         offset = extremity_initial_position - get_holded_extremity();
@@ -1694,14 +1697,16 @@ ArcKnotHolder::ArcKnotHolder(SPDesktop *desktop, SPItem *item)
                              .c_str()));
 
     entity_start->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_ROTATE, "Arc:start",
-                         _("Position the <b>start point</b> of the arc or segment; with <b>Shift</b> to move "
-                           "with <b>end point</b>; with <b>Ctrl</b> to snap angle; drag <b>inside</b> the "
-                           "ellipse for arc, <b>outside</b> for segment"));
+                         _(("Position the <b>start point</b> of the arc or segment; with <b>Shift</b> to move "
+                           "with <b>end point</b>; with <b>" + entity_start->get_mod_moveinc_label() + "</b> to snap angle; drag <b>inside</b> the "
+                           "ellipse for arc, <b>outside</b> for segment")
+                           .c_str()));
 
     entity_end->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_ROTATE, "Arc:end",
-                       _("Position the <b>end point</b> of the arc or segment; with <b>Shift</b> to move "
-                         "with <b>start point</b>; with <b>Ctrl</b> to snap angle; drag <b>inside</b> the "
-                         "ellipse for arc, <b>outside</b> for segment"));
+                       _(("Position the <b>end point</b> of the arc or segment; with <b>Shift</b> to move "
+                         "with <b>start point</b>; with <b>" + entity_end->get_mod_moveinc_label() + "</b> to snap angle; drag <b>inside</b> the "
+                         "ellipse for arc, <b>outside</b> for segment")
+                         .c_str()));
 
     entity_center->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_MARKER, "Arc:center",
                           _("Drag to move the ellipse"));
