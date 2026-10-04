@@ -1513,11 +1513,12 @@ ArcKnotHolderEntityStart::knot_set(Geom::Point const &p, Geom::Point const &/*or
     g_assert(arc != nullptr);
 
     gint side = sp_genericellipse_side(arc, p);
+    Geom::Point const s = snap_knot_position(p, state);
     if(side != 0) { arc->setArcType( (side == -1) ?
                                      SP_GENERIC_ELLIPSE_ARC_TYPE_SLICE :
                                      SP_GENERIC_ELLIPSE_ARC_TYPE_ARC); }
 
-    Geom::Point delta = p - Geom::Point(arc->cx.computed, arc->cy.computed);
+    Geom::Point delta = s - Geom::Point(arc->cx.computed, arc->cy.computed);
     Geom::Scale sc(arc->rx.computed, arc->ry.computed);
 
     double offset = arc->start - atan2(delta * sc.inverse());
@@ -1565,11 +1566,12 @@ ArcKnotHolderEntityEnd::knot_set(Geom::Point const &p, Geom::Point const &/*orig
     g_assert(arc != nullptr);
 
     gint side = sp_genericellipse_side(arc, p);
+    Geom::Point const s = snap_knot_position(p, state);
     if(side != 0) { arc->setArcType( (side == -1) ?
                                      SP_GENERIC_ELLIPSE_ARC_TYPE_SLICE :
                                      SP_GENERIC_ELLIPSE_ARC_TYPE_ARC); }
 
-    Geom::Point delta = p - Geom::Point(arc->cx.computed, arc->cy.computed);
+    Geom::Point delta = s - Geom::Point(arc->cx.computed, arc->cy.computed);
     Geom::Scale sc(arc->rx.computed, arc->ry.computed);
 
     double offset = arc->end - atan2(delta * sc.inverse());
