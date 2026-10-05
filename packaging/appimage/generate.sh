@@ -100,7 +100,15 @@ wget -c "$goappimage_url" -O goappimage
 chmod +x goappimage
 
 ./goappimage -s --preserve_cwd deploy ./appdir/usr/share/applications/org.inkscape.Inkscape.desktop
+
+# Make gdk-pixbuf loaders use relative paths, rather than absolute paths pointing at /usr/lib
 sed -i -e 's|/usr/lib/x86_64-linux-gnu/gdk-pixbuf-.*/.*/loaders/||g' ./appdir/lib/x86_64-linux-gnu/gdk-pixbuf-*/*/loaders.cache
+
+# If GTK_THEME is set, it overrides everything and changing the global theme GtkSetting on the fly will do nothing.
+# goappimage's wrapper sets GTK_THEME=Default, thus preventing our theme preferences from ever taking effect.
+# So just drop that bit of the wrapper here.
+sed -i '/export GTK_THEME=/d' ./appdir/AppRun
+
 ARCH=x86_64 VERSION=1.0 ./goappimage ./appdir
 
 sha="$(git rev-parse --short HEAD)"
