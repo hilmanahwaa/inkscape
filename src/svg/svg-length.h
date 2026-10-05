@@ -89,6 +89,7 @@ public:
     void set(Unit u, double v); // Sets computed value based on u and v.
     void set(Unit u, double v, double c); // Sets all three values.
     void unset(Unit u = NONE, double v = 0, double c = 0);
+    void unset(SVGLength const &l);
     void scale(double scale); // Scales length (value, computed), leaving unit alone.
     void update(double em, double ex, double scale); // Updates computed value
 };
