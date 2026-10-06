@@ -765,15 +765,14 @@ Box3DKnotHolder::Box3DKnotHolder(SPDesktop *desktop, SPItem *item)
 {
     for (int knot_id = 0; knot_id < 8; ++knot_id) {
         auto *entity_corner = new Box3DKnotHolderEntity(knot_id);
-        std::string default_direction_str = "in X/Y direction";
-        std::string modified_direction_str = "along the Z axis";
+        auto tooltip = _("Resize box in X/Y direction; with <b>%1</b> along the Z axis; with <b>%2</b> to constrain to the directions of edges or diagonals");
         if (!entity_corner->default_direction_is_xy()) {
-            std::swap(default_direction_str, modified_direction_str);
+            tooltip = _("Resize box along the Z axis; with <b>%1</b> in X/Y direction; with <b>%2</b> to constrain to the directions of edges or diagonals");
         }
+        auto tooltip_with_shortcuts = Glib::ustring::compose(tooltip, entity_corner->get_modchangedir_label(), entity_corner->get_modconfine_label());
         entity_corner->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_SHAPER, "Box3D:corner" + std::to_string(knot_id),
-                           Glib::ustring::compose(_("Resize box %1; with <b>%2</b> %3; with <b>%4</b> to constrain to the directions of edges or diagonals")
-                               , default_direction_str,  entity_corner->get_modchangedir_label(), modified_direction_str, entity_corner->get_modconfine_label())
-                               .c_str());
+                              tooltip_with_shortcuts.c_str());
+
         entity.push_back(entity_corner);
     }
 
