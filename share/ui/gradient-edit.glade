@@ -145,7 +145,7 @@
               <object class="GtkBox">
                 <child>
                   <object class="GtkButton" id="addStopBtn">
-                    <property name="icon-name">node-add</property>
+                    <property name="icon-name">gradient-add-stop</property>
                     <property name="valign">center</property>
                     <property name="tooltip-text" translatable="yes">Add stop</property>
                   </object>
@@ -159,7 +159,7 @@
                 </child>
                 <child>
                   <object class="GtkButton" id="removeStopBtn">
-                    <property name="icon-name">node-delete</property>
+                    <property name="icon-name">gradient-remove-stop</property>
                     <property name="valign">center</property>
                     <property name="tooltip-text" translatable="yes">Remove stop</property>
                   </object>
