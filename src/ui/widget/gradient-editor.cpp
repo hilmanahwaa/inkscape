@@ -467,7 +467,6 @@ void GradientEditor::updateButtonSensitivity()
     auto vector = get_gradient_vector();
     _prev_stop_btn.set_sensitive(vector && _current_stop_index > 0);
     _next_stop_btn.set_sensitive(vector && _current_stop_index < vector->getStopCount() - 1);
-    _add_stop_btn.set_sensitive(vector && vector->getStopCount() <= 20);
     _insert_stop_left->set_enabled(getLeftStopInsertIndex() >= 0);
     _insert_stop_right->set_enabled(getRightStopInsertIndex() >= 0);
     _remove_stop_btn.set_sensitive(vector && vector->getStopCount() > 2);
