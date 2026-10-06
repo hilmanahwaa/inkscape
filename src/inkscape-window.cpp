@@ -41,6 +41,7 @@
 #include "actions/actions-pages.h"
 #include "actions/actions-paths.h"  // TEMP
 #include "actions/actions-selection-window.h"
+#include "actions/actions-text-attributes.h"
 #include "actions/actions-tools.h"
 #include "actions/actions-transform.h"
 #include "actions/actions-view-mode.h"
@@ -89,6 +90,7 @@ InkscapeWindow::InkscapeWindow(SPDesktop *desktop)
     add_actions_page_tools(this);           // Actions specific to pages tool and toolbar
     add_actions_path(this);                 // Actions for paths. TEMP
     add_actions_select_window(this);        // Actions with desktop selection
+    add_actions_text_attributes(this);      // actions for Text attributes (underline, etc.)
     add_actions_tools(this);                // Actions to switch between tools.
     add_actions_transform(this);            // Actions for transforming against the screen zoom
     add_actions_view_mode(this);            // Actions to change how Inkscape canvas is displayed.

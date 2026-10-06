@@ -244,6 +244,48 @@
       </object>
     </child>
     <child>
+      <object class="GtkToggleButton" id="_textdecoration_underline_btn">
+        <property name="valign">center</property>
+        <property name="focusable">True</property>
+        <property name="focus-on-click">False</property>
+        <property name="receives-default">True</property>
+	<property name="action-name">win.text-decoration-line-underline</property>
+        <property name="has-frame">False</property>
+        <property name="icon-name">format-text-underline</property>
+        <style>
+            <class name="priority1"/>
+        </style>
+      </object>
+    </child>
+    <child>
+      <object class="GtkToggleButton" id="_textdecoration_line_through_btn">
+        <property name="valign">center</property>
+        <property name="focusable">True</property>
+        <property name="focus-on-click">False</property>
+        <property name="receives-default">True</property>
+	<property name="action-name">win.text-decoration-line-line-through</property>
+        <property name="has-frame">False</property>
+        <property name="icon-name">format-text-strikethrough</property>
+        <style>
+            <class name="priority1"/>
+        </style>
+      </object>
+    </child>
+    <child>
+      <object class="GtkToggleButton" id="_textdecoration_over_line_btn">
+        <property name="valign">center</property>
+        <property name="focusable">True</property>
+        <property name="focus-on-click">False</property>
+        <property name="receives-default">True</property>
+	<property name="action-name">win.text-decoration-line-overline</property>
+        <property name="has-frame">False</property>
+        <property name="icon-name">format-text-overline</property>
+        <style>
+            <class name="priority1"/>
+        </style>
+      </object>
+    </child>
+    <child>
       <object class="GtkSeparator">
         <style>
             <class name="priority1"/>

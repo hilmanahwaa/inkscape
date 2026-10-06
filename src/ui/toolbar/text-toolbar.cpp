@@ -37,6 +37,8 @@
 #include "document-undo.h"
 #include "document.h"
 #include "inkscape.h"
+#include "inkscape-window.h"
+#include "actions/actions-text-attributes.h"
 #include "libnrtype/font-lister.h"
 #include "object/sp-flowdiv.h"
 #include "object/sp-flowtext.h"
@@ -267,6 +269,9 @@ TextToolbar::TextToolbar(Glib::RefPtr<Gtk::Builder> const &builder)
     // Subscript button.
     _subscript_btn.signal_toggled().connect(sigc::bind(sigc::mem_fun(*this, &TextToolbar::script_changed), 1));
     _subscript_btn.set_active(prefs->getBool("/tools/text/sub", false));
+
+    // Text decoration buttons
+    // See .ui file and actions-text-attributes.cpp
 
     // Font collections signals.
     auto const font_collections = FontCollections::get();
@@ -1424,6 +1429,7 @@ void TextToolbar::_selectionChanged(Selection *selection) // don't bother to upd
     int result_family = sp_desktop_query_style(desktop, &query, QUERY_STYLE_PROPERTY_FONTFAMILY);
     int result_style = sp_desktop_query_style(desktop, &query, QUERY_STYLE_PROPERTY_FONTSTYLE);
     int result_baseline = sp_desktop_query_style(desktop, &query, QUERY_STYLE_PROPERTY_BASELINES);
+    int result_decoration = sp_desktop_query_style(desktop, &query, QUERY_STYLE_PROPERTY_TEXTDECORATION);
     int result_wmode = sp_desktop_query_style(desktop, &query, QUERY_STYLE_PROPERTY_WRITINGMODES);
 
     // Calling sp_desktop_query_style will result in a call to TextTool::_styleQueried().
@@ -1531,6 +1537,15 @@ void TextToolbar::_selectionChanged(Selection *selection) // don't bother to upd
              query.baseline_shift.literal == SP_CSS_BASELINE_SHIFT_SUB );
 
         _subscript_btn.set_active(subscriptSet);
+
+        auto* window = dynamic_cast<InkscapeWindow*>(get_root());
+        if (window) {
+            if (result_decoration == QUERY_STYLE_SINGLE || result_decoration == QUERY_STYLE_MULTIPLE_SAME) {
+                text_decoration_line_set(window, &query);
+            }
+        } else {
+            std::cerr << "TextToolbar::_selectionChanged:: couldn't find InkscapeWindow!" << std::endl;
+        }
 
         // Alignment
 
