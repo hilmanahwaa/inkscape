@@ -65,6 +65,7 @@ $ARCH-gsl \
 $ARCH-gtk4 \
 $ARCH-gtk-doc \
 $ARCH-gtkmm-4.0 \
+$ARCH-harfbuzz-cairo \
 $ARCH-libxslt
 
 # install packaging tools (required for dist-win-* targets)
