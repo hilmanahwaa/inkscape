@@ -354,6 +354,15 @@ void SVGLength::unset(SVGLength::Unit u, double v, double c)
     computed = c;
 }
 
+void SVGLength::unset(const SVGLength &l)
+{
+    _set = false;
+    _found = l._found;
+    unit = l.unit;
+    value = l.value;
+    computed = l.computed;
+}
+
 void SVGLength::scale(double scale)
 {
     value *= scale;

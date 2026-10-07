@@ -304,10 +304,11 @@ static SPGradient *sp_gradient_fork_private_if_necessary(SPGradient *gr, SPGradi
             }
             sp_gradient_repr_set_link(repr_new, nullptr);
 
-            // Need to generate SPObjects (which fills in node array and handle arrays).
-            gr->requestModified(SP_OBJECT_MODIFIED_FLAG);
-            gr->document->ensureUpToDate();
-       }
+        }
+        // Need to pass through ::update() to calculate computed values.
+        // Need to generate SPObjects (which fills in node array and handle arrays for meshes).
+        gr->requestModified(SP_OBJECT_MODIFIED_FLAG);
+        gr->document->ensureUpToDate();
         return gr_new;
     } else {
         return gr;
@@ -553,17 +554,20 @@ SPGradient *sp_gradient_convert_to_userspace(SPGradient *gr, SPItem *item, gchar
             Geom::Point c_b = Geom::Point(rg->cx.computed, rg->cy.computed);
             Geom::Point f_b = Geom::Point(rg->fx.computed, rg->fy.computed);
             double r_b = rg->r.computed;
+            double fr_b = rg->fr.computed;
 
             // converted points in userspace coords
             Geom::Point c_u = c_b * point_convert;
             Geom::Point f_u = f_b * point_convert;
             double r_u = r_b * point_convert.descrim();
+            double fr_u = fr_b * point_convert.descrim();
 
             repr->setAttributeSvgDouble("cx", c_u[Geom::X]);
             repr->setAttributeSvgDouble("cy", c_u[Geom::Y]);
             repr->setAttributeSvgDouble("fx", f_u[Geom::X]);
             repr->setAttributeSvgDouble("fy", f_u[Geom::Y]);
             repr->setAttributeSvgDouble("r", r_u);
+            repr->setAttributeSvgDouble("fr", fr_u);
 
             // set the gradientUnits
             repr->setAttribute("gradientUnits", "userSpaceOnUse");
