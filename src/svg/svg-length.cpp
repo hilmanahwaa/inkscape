@@ -357,6 +357,7 @@ void SVGLength::unset(SVGLength::Unit u, double v, double c)
 void SVGLength::unset(const SVGLength &l)
 {
     _set = false;
+    _found = l._found;
     unit = l.unit;
     value = l.value;
     computed = l.computed;

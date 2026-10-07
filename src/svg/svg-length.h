@@ -44,6 +44,9 @@ public:
     // The object's value is valid / exists in SVG.
     bool _set;
 
+    // If this was found through chaining hrefs (in gradients)
+    bool _found = false;
+
     // The unit of value.
     Unit unit;
 

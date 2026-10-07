@@ -136,9 +136,10 @@ SPRadialGradient::update(SPCtx *ctx, guint flags)
         if (!fy._set) fy.unset(find_fy());
         if (!fr._set) fr.unset(find_fr());
 
-        // Fallback values, need to be updated in case cx, cy found from referenced gradient.
-        if (!fx._set) fx.unset(cx);
-        if (!fy._set) fy.unset(cy);
+        // Fallback values, need to be updated in case cx, cy found from referenced gradient,
+        // but only if fx and fy not found in reference gradient.
+        if (!fx._set && !fx._found) fx.unset(cx);
+        if (!fy._set && !fy._found) fy.unset(cy);
 
         SPItemCtx const *ictx = reinterpret_cast<SPItemCtx const *>(ctx);
 

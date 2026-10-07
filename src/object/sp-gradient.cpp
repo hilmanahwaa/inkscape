@@ -58,11 +58,18 @@ SVGLength SPGradient::find_attr_length(const Derived* src, SVGLength Derived::*a
     SPGradient const *start = src;
     auto found = chase_hrefs(start, [attr](SPGradient const *g) {
         auto d = dynamic_cast<Derived const*>(g);
-        auto junk = (d->*attr);
         return d && (d->*attr)._set;
     });
-    // If found return that, else return the original SVGLength as to not overwrite defaults.
-    return static_cast<Derived const *>(found ? found : start)->*attr;
+
+    // If found, make a copy (so we don't violate constantness), setting _found to true.
+    if (found) {
+        SVGLength l = static_cast<Derived const *>(found)->*attr;
+        l._found = true;
+        return l;
+    }
+
+    // If not found, return the original SVGLength as to not overwrite defaults.
+    return static_cast<Derived const *>(start)->*attr;
 }
 // Needed to keep the definition in the .cpp file.
 template SVGLength SPGradient::find_attr_length<SPRadialGradient>(
