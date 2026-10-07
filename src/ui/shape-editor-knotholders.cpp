@@ -673,15 +673,23 @@ RectKnotHolder::RectKnotHolder(SPDesktop *desktop, SPItem *item)
 
 class Box3DKnotHolderEntity : public KnotHolderEntity {
 public:
-    Geom::Point knot_get() const override = 0;
-    void knot_set(Geom::Point const &p, Geom::Point const &origin, unsigned int state) override = 0;
+    Box3DKnotHolderEntity(unsigned int knot_id) : knot_id(knot_id) {}
+    Geom::Point knot_get() const override;
+    void knot_set(Geom::Point const &p, Geom::Point const &origin, unsigned int state) override;
+    void knot_ungrabbed(Geom::Point const &p, Geom::Point const &origin, guint state) override {};
+    bool default_direction_is_xy() const;
 
-    Geom::Point knot_get_generic(SPItem *item, unsigned int knot_id) const;
-    void knot_set_generic(SPItem *item, unsigned int knot_id, Geom::Point const &p, unsigned int state);
+    std::string get_modconfine_label() const { return mod_trans_confine->get_label(); }
+    std::string get_modchangedir_label() const { return mod_change_direction->get_label(); }
+
+private:
+    unsigned int knot_id;
+    Modifiers::Modifier *mod_trans_confine = Modifiers::Modifier::get(Modifiers::Type::TRANS_CONFINE);
+    Modifiers::Modifier *mod_change_direction = Modifiers::Modifier::get(Modifiers::Type::BOX3D_CHANGE_KNOT_DIRECTION);
 };
 
 Geom::Point
-Box3DKnotHolderEntity::knot_get_generic(SPItem *item, unsigned int knot_id) const
+Box3DKnotHolderEntity::knot_get() const
 {
     if (auto box = cast<SPBox3D>(item)) {
         return box->get_corner_screen(knot_id);
@@ -690,7 +698,7 @@ Box3DKnotHolderEntity::knot_get_generic(SPItem *item, unsigned int knot_id) cons
 }
 
 void
-Box3DKnotHolderEntity::knot_set_generic(SPItem *item, unsigned int knot_id, Geom::Point const &new_pos, unsigned int state)
+Box3DKnotHolderEntity::knot_set(Geom::Point const &new_pos, Geom::Point const &/*origin*/, unsigned int state)
 {
     Geom::Point const s = snap_knot_position(new_pos, state);
 
@@ -700,127 +708,32 @@ Box3DKnotHolderEntity::knot_set_generic(SPItem *item, unsigned int knot_id, Geom
     Geom::Affine const i2dt (item->i2dt_affine ());
 
     Box3D::Axis movement;
-    if ((knot_id < 4) != (state & GDK_SHIFT_MASK)) {
+    if (default_direction_is_xy() != mod_change_direction->active(state)) {
         movement = Box3D::XY;
     } else {
         movement = Box3D::Z;
     }
 
-    box->set_corner (knot_id, s * i2dt, movement, (state & GDK_CONTROL_MASK));
+    box->set_corner (knot_id, s * i2dt, movement, mod_trans_confine->active(state));
     box->set_z_orders();
     box->position_set();
 }
 
-class Box3DKnotHolderEntity0 : public Box3DKnotHolderEntity {
-public:
-    Geom::Point knot_get() const override;
-    void knot_ungrabbed(Geom::Point const &p, Geom::Point const &origin, guint state) override {};
-    void knot_set(Geom::Point const &p, Geom::Point const &origin, unsigned int state) override;
-};
-
-class Box3DKnotHolderEntity1 : public Box3DKnotHolderEntity {
-public:
-    Geom::Point knot_get() const override;
-    void knot_ungrabbed(Geom::Point const &p, Geom::Point const &origin, guint state) override {};
-    void knot_set(Geom::Point const &p, Geom::Point const &origin, unsigned int state) override;
-};
-
-class Box3DKnotHolderEntity2 : public Box3DKnotHolderEntity {
-public:
-    Geom::Point knot_get() const override;
-    void knot_ungrabbed(Geom::Point const &p, Geom::Point const &origin, guint state) override {};
-    void knot_set(Geom::Point const &p, Geom::Point const &origin, unsigned int state) override;
-};
-
-class Box3DKnotHolderEntity3 : public Box3DKnotHolderEntity {
-public:
-    Geom::Point knot_get() const override;
-    void knot_ungrabbed(Geom::Point const &p, Geom::Point const &origin, guint state) override {};
-    void knot_set(Geom::Point const &p, Geom::Point const &origin, unsigned int state) override;
-};
-
-class Box3DKnotHolderEntity4 : public Box3DKnotHolderEntity {
-public:
-    Geom::Point knot_get() const override;
-    void knot_ungrabbed(Geom::Point const &p, Geom::Point const &origin, guint state) override {};
-    void knot_set(Geom::Point const &p, Geom::Point const &origin, unsigned int state) override;
-};
-
-class Box3DKnotHolderEntity5 : public Box3DKnotHolderEntity {
-public:
-    Geom::Point knot_get() const override;
-    void knot_ungrabbed(Geom::Point const &p, Geom::Point const &origin, guint state) override {};
-    void knot_set(Geom::Point const &p, Geom::Point const &origin, unsigned int state) override;
-};
-
-class Box3DKnotHolderEntity6 : public Box3DKnotHolderEntity {
-public:
-    Geom::Point knot_get() const override;
-    void knot_ungrabbed(Geom::Point const &p, Geom::Point const &origin, guint state) override {};
-    void knot_set(Geom::Point const &p, Geom::Point const &origin, unsigned int state) override;
-};
-
-class Box3DKnotHolderEntity7 : public Box3DKnotHolderEntity {
-public:
-    Geom::Point knot_get() const override;
-    void knot_ungrabbed(Geom::Point const &p, Geom::Point const &origin, guint state) override {};
-    void knot_set(Geom::Point const &p, Geom::Point const &origin, unsigned int state) override;
-};
+bool Box3DKnotHolderEntity::default_direction_is_xy() const
+{
+    return knot_id < 4;
+}
 
 class Box3DKnotHolderEntityCenter : public KnotHolderEntity {
 public:
     Geom::Point knot_get() const override;
     void knot_ungrabbed(Geom::Point const &p, Geom::Point const &origin, guint state) override {};
     void knot_set(Geom::Point const &p, Geom::Point const &origin, unsigned int state) override;
+
+private:
+    Modifiers::Modifier *mod_trans_confine = Modifiers::Modifier::get(Modifiers::Type::TRANS_CONFINE);
+    Modifiers::Modifier *mod_change_direction = Modifiers::Modifier::get(Modifiers::Type::BOX3D_CHANGE_KNOT_DIRECTION);
 };
-
-Geom::Point
-Box3DKnotHolderEntity0::knot_get() const
-{
-    return knot_get_generic(item, 0);
-}
-
-Geom::Point
-Box3DKnotHolderEntity1::knot_get() const
-{
-    return knot_get_generic(item, 1);
-}
-
-Geom::Point
-Box3DKnotHolderEntity2::knot_get() const
-{
-    return knot_get_generic(item, 2);
-}
-
-Geom::Point
-Box3DKnotHolderEntity3::knot_get() const
-{
-    return knot_get_generic(item, 3);
-}
-
-Geom::Point
-Box3DKnotHolderEntity4::knot_get() const
-{
-    return knot_get_generic(item, 4);
-}
-
-Geom::Point
-Box3DKnotHolderEntity5::knot_get() const
-{
-    return knot_get_generic(item, 5);
-}
-
-Geom::Point
-Box3DKnotHolderEntity6::knot_get() const
-{
-    return knot_get_generic(item, 6);
-}
-
-Geom::Point
-Box3DKnotHolderEntity7::knot_get() const
-{
-    return knot_get_generic(item, 7);
-}
 
 Geom::Point
 Box3DKnotHolderEntityCenter::knot_get() const
@@ -832,54 +745,6 @@ Box3DKnotHolderEntityCenter::knot_get() const
 }
 
 void
-Box3DKnotHolderEntity0::knot_set(Geom::Point const &new_pos, Geom::Point const &/*origin*/, unsigned int state)
-{
-    knot_set_generic(item, 0, new_pos, state);
-}
-
-void
-Box3DKnotHolderEntity1::knot_set(Geom::Point const &new_pos, Geom::Point const &/*origin*/, unsigned int state)
-{
-    knot_set_generic(item, 1, new_pos, state);
-}
-
-void
-Box3DKnotHolderEntity2::knot_set(Geom::Point const &new_pos, Geom::Point const &/*origin*/, unsigned int state)
-{
-    knot_set_generic(item, 2, new_pos, state);
-}
-
-void
-Box3DKnotHolderEntity3::knot_set(Geom::Point const &new_pos, Geom::Point const &/*origin*/, unsigned int state)
-{
-    knot_set_generic(item, 3, new_pos, state);
-}
-
-void
-Box3DKnotHolderEntity4::knot_set(Geom::Point const &new_pos, Geom::Point const &/*origin*/, unsigned int state)
-{
-    knot_set_generic(item, 4, new_pos, state);
-}
-
-void
-Box3DKnotHolderEntity5::knot_set(Geom::Point const &new_pos, Geom::Point const &/*origin*/, unsigned int state)
-{
-    knot_set_generic(item, 5, new_pos, state);
-}
-
-void
-Box3DKnotHolderEntity6::knot_set(Geom::Point const &new_pos, Geom::Point const &/*origin*/, unsigned int state)
-{
-    knot_set_generic(item, 6, new_pos, state);
-}
-
-void
-Box3DKnotHolderEntity7::knot_set(Geom::Point const &new_pos, Geom::Point const &/*origin*/, unsigned int state)
-{
-    knot_set_generic(item, 7, new_pos, state);
-}
-
-void
 Box3DKnotHolderEntityCenter::knot_set(Geom::Point const &new_pos, Geom::Point const &origin, unsigned int state)
 {
     Geom::Point const s = snap_knot_position(new_pos, state);
@@ -888,8 +753,8 @@ Box3DKnotHolderEntityCenter::knot_set(Geom::Point const &new_pos, Geom::Point co
     g_assert(box != nullptr);
     Geom::Affine const i2dt (item->i2dt_affine ());
 
-    box->set_center(s * i2dt, origin * i2dt, !(state & GDK_SHIFT_MASK) ? Box3D::XY : Box3D::Z,
-                    state & GDK_CONTROL_MASK);
+    box->set_center(s * i2dt, origin * i2dt, !mod_change_direction->active(state) ? Box3D::XY : Box3D::Z,
+                    mod_trans_confine->active(state));
 
     box->set_z_orders();
     box->position_set();
@@ -898,59 +763,23 @@ Box3DKnotHolderEntityCenter::knot_set(Geom::Point const &new_pos, Geom::Point co
 Box3DKnotHolder::Box3DKnotHolder(SPDesktop *desktop, SPItem *item)
     : KnotHolder(desktop, item)
 {
-    Box3DKnotHolderEntity0 *entity_corner0 = new Box3DKnotHolderEntity0();
-    Box3DKnotHolderEntity1 *entity_corner1 = new Box3DKnotHolderEntity1();
-    Box3DKnotHolderEntity2 *entity_corner2 = new Box3DKnotHolderEntity2();
-    Box3DKnotHolderEntity3 *entity_corner3 = new Box3DKnotHolderEntity3();
-    Box3DKnotHolderEntity4 *entity_corner4 = new Box3DKnotHolderEntity4();
-    Box3DKnotHolderEntity5 *entity_corner5 = new Box3DKnotHolderEntity5();
-    Box3DKnotHolderEntity6 *entity_corner6 = new Box3DKnotHolderEntity6();
-    Box3DKnotHolderEntity7 *entity_corner7 = new Box3DKnotHolderEntity7();
+    for (int knot_id = 0; knot_id < 8; ++knot_id) {
+        auto *entity_corner = new Box3DKnotHolderEntity(knot_id);
+        auto tooltip = _("Resize box in X/Y direction; with <b>%1</b> along the Z axis; with <b>%2</b> to constrain to the directions of edges or diagonals");
+        if (!entity_corner->default_direction_is_xy()) {
+            tooltip = _("Resize box along the Z axis; with <b>%1</b> in X/Y direction; with <b>%2</b> to constrain to the directions of edges or diagonals");
+        }
+        auto tooltip_with_shortcuts = Glib::ustring::compose(tooltip, entity_corner->get_modchangedir_label(), entity_corner->get_modconfine_label());
+        entity_corner->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_SHAPER, "Box3D:corner" + std::to_string(knot_id),
+                              tooltip_with_shortcuts.c_str());
+
+        entity.push_back(entity_corner);
+    }
+
     Box3DKnotHolderEntityCenter *entity_center = new Box3DKnotHolderEntityCenter();
-
-    entity_corner0->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_SHAPER, "Box3D:corner0",
-                           _("Resize box in X/Y direction; with <b>Shift</b> along the Z axis; "
-                             "with <b>Ctrl</b> to constrain to the directions of edges or diagonals"));
-
-    entity_corner1->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_SHAPER, "Box3D:corner1",
-                           _("Resize box in X/Y direction; with <b>Shift</b> along the Z axis; "
-                             "with <b>Ctrl</b> to constrain to the directions of edges or diagonals"));
-
-    entity_corner2->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_SHAPER, "Box3D:corner2",
-                           _("Resize box in X/Y direction; with <b>Shift</b> along the Z axis; "
-                             "with <b>Ctrl</b> to constrain to the directions of edges or diagonals"));
-
-    entity_corner3->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_SHAPER, "Box3D:corner3",
-                           _("Resize box in X/Y direction; with <b>Shift</b> along the Z axis; "
-                             "with <b>Ctrl</b> to constrain to the directions of edges or diagonals"));
-
-    entity_corner4->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_SHAPER, "Box3D:corner4",
-                     _("Resize box along the Z axis; with <b>Shift</b> in X/Y direction; "
-                       "with <b>Ctrl</b> to constrain to the directions of edges or diagonals"));
-
-    entity_corner5->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_SHAPER, "Box3D:corner5",
-                     _("Resize box along the Z axis; with <b>Shift</b> in X/Y direction; "
-                       "with <b>Ctrl</b> to constrain to the directions of edges or diagonals"));
-
-    entity_corner6->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_SHAPER, "Box3D:corner6",
-                     _("Resize box along the Z axis; with <b>Shift</b> in X/Y direction; "
-                       "with <b>Ctrl</b> to constrain to the directions of edges or diagonals"));
-
-    entity_corner7->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_SHAPER, "Box3D:corner7",
-                     _("Resize box along the Z axis; with <b>Shift</b> in X/Y direction; "
-                       "with <b>Ctrl</b> to constrain to the directions of edges or diagonals"));
-
     entity_center->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_MARKER, "Box3D:center",
                           _("Move the box in perspective"));
 
-    entity.push_back(entity_corner0);
-    entity.push_back(entity_corner1);
-    entity.push_back(entity_corner2);
-    entity.push_back(entity_corner3);
-    entity.push_back(entity_corner4);
-    entity.push_back(entity_corner5);
-    entity.push_back(entity_corner6);
-    entity.push_back(entity_corner7);
     entity.push_back(entity_center);
 
     add_pattern_knotholder();

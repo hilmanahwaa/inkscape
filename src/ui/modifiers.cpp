@@ -62,6 +62,7 @@ ModifierIdToTypeMap const &modifier_type_from_id()
         {"freehand-dot-double", Type::FREEHAND_DOT_DOUBLE},
         {"freehand-dot-random", Type::FREEHAND_DOT_RANDOM},
         {"bool-shift", Type::BOOL_SHIFT},
+        {"box3d-change-knot-direction", Type::BOX3D_CHANGE_KNOT_DIRECTION},
         {"box3d-extrude-one", Type::BOX3D_EXTRUDE_ONE},
         {"box3d-extrude-two", Type::BOX3D_EXTRUDE_TWO},
         {"calligraphic-hatching", Type::CALLI_HATCHING},
@@ -177,6 +178,7 @@ Modifier::Container &Modifier::_modifiers()
 
         make_modifier("bool-shift", _("Switch mode"), _("Change shape builder mode temporarily by holding a modifier key"), SHIFT, BOOLEANS_TOOL, DRAG),
 
+        make_modifier("box3d-change-knot-direction", _("Change the axis or direction of the knot"), _("Move the knot against axis Z instead of X/Y direction or vice-versa"), SHIFT, BOX3D_TOOL, DRAG),
         make_modifier("box3d-extrude-one", _("Extrude along the Z axis"), _("Extend the 3D box in one dimension only"), SHIFT, BOX3D_TOOL, DRAG),
         make_modifier("box3d-extrude-two", _("Extrude along the Y and Z axes"), _("Extend the 3D box in two dimensions"), SHIFT | CTRL, BOX3D_TOOL, DRAG),
 

@@ -99,6 +99,7 @@ enum class Type {
 
     BOOL_SHIFT,           // Shift the shape builder into its alternative mode.
 
+    BOX3D_CHANGE_KNOT_DIRECTION, // Move the knot along Z axis instead of X/Y direction or vice-versa
     BOX3D_EXTRUDE_ONE,    // Extrudes a box along a single dimension {DRAG+SHIFT}
     BOX3D_EXTRUDE_TWO,    // Do not constrain extrusion to perspective line {DRAG+CTRL} while extruding
 
