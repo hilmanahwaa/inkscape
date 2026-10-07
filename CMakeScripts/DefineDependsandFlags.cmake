@@ -194,7 +194,7 @@ endif()
 
 if(WITH_CAPYPDF)
     if(NOT WITH_INTERNAL_CAPYPDF)
-        pkg_check_modules(CAPYPDF QUIET IMPORTED_TARGET capypdf>=0.21)
+        pkg_check_modules(CAPYPDF QUIET IMPORTED_TARGET capypdf>=0.21.99)
         if(CAPYPDF_FOUND)
             add_library(Inkscape::CapyPDF ALIAS PkgConfig::CAPYPDF)
         else()

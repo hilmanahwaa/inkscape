@@ -254,7 +254,7 @@ std::vector<CapyPDF_AnnotationId> Document::get_anchors_for_page(SPPage const *p
             continue;
         }
 
-        auto annot = capypdf::Annotation();
+        auto annot = capypdf::Annotation::new_link_annotation();
         annot.set_rectangle(bbox->left(), bbox->bottom(), bbox->right(), bbox->top());
         annot.set_flags(CAPY_ANNOTATION_FLAG_HIDDEN);
 
