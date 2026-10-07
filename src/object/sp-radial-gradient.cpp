@@ -141,6 +141,10 @@ SPRadialGradient::update(SPCtx *ctx, guint flags)
         if (!fx._set && !fx._found) fx.unset(cx);
         if (!fy._set && !fy._found) fy.unset(cy);
 
+        // Reset
+        fx._found = false;
+        fy._found = false;
+
         SPItemCtx const *ictx = reinterpret_cast<SPItemCtx const *>(ctx);
 
         if (getUnits() == SP_GRADIENT_UNITS_USERSPACEONUSE) {
