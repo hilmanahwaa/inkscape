@@ -1555,21 +1555,38 @@ ArcKnotHolder::ArcKnotHolder(SPDesktop *desktop, SPItem *item)
 }
 
 /* SPStar */
-
-class StarKnotHolderEntity1 : public KnotHolderEntity {
+class StarKnotHolderEntityVertex : public KnotHolderEntity
+{
 public:
-    Geom::Point knot_get() const override;
-    void knot_set(Geom::Point const &p, Geom::Point const &origin, unsigned int state) override;
     void knot_ungrabbed(Geom::Point const &p, Geom::Point const &origin, guint state) override {};
     void knot_click(unsigned int state) override;
+
+protected:
+    SPStar* get_star();
+    Geom::Point knot_get_internal(SPStarPoint starPoint) const;
+    void knot_set_internal(Geom::Point const &p, unsigned int state);
+    virtual void update_with_radial_ray_modifier(Geom::Point const &d) = 0;
+    virtual void update_without_modifier(Geom::Point const &d, double arg1, double darg1) = 0;
 };
 
-class StarKnotHolderEntity2 : public KnotHolderEntity {
+class StarKnotHolderEntity1 : public StarKnotHolderEntityVertex {
 public:
     Geom::Point knot_get() const override;
     void knot_set(Geom::Point const &p, Geom::Point const &origin, unsigned int state) override;
-    void knot_ungrabbed(Geom::Point const &p, Geom::Point const &origin, guint state) override {};
-    void knot_click(unsigned int state) override;
+
+protected:
+    void update_with_radial_ray_modifier(Geom::Point const &d) override;
+    void update_without_modifier(Geom::Point const &d, double arg1, double darg1) override;
+};
+
+class StarKnotHolderEntity2 : public StarKnotHolderEntityVertex {
+public:
+    Geom::Point knot_get() const override;
+    void knot_set(Geom::Point const &p, Geom::Point const &origin, unsigned int state) override;
+
+protected:
+    void update_with_radial_ray_modifier(Geom::Point const &d) override;
+    void update_without_modifier(Geom::Point const &d, double arg1, double darg1) override;
 };
 
 class StarKnotHolderEntityCenter : public KnotHolderEntity {
@@ -1579,11 +1596,9 @@ public:
     void knot_set(Geom::Point const &p, Geom::Point const &origin, unsigned int state) override;
 };
 
-void
-StarKnotHolderEntity1::knot_set(Geom::Point const &p, Geom::Point const &/*origin*/, unsigned int state)
+void StarKnotHolderEntityVertex::knot_set_internal(Geom::Point const &p, unsigned int state)
 {
-    auto star = cast<SPStar>(item);
-    g_assert(star != nullptr);
+    auto star = get_star();
 
     Geom::Point const s = snap_knot_position(p, state);
 
@@ -1597,43 +1612,56 @@ StarKnotHolderEntity1::knot_set(Geom::Point const &p, Geom::Point const &/*origi
     } else if (state & GDK_SHIFT_MASK) {
         star->rounded = darg1/(star->arg[0] - star->arg[1]);
     } else if (state & GDK_CONTROL_MASK) {
-        star->r[0]    = L2(d);
+        update_with_radial_ray_modifier(d);
     } else {
-        star->r[0]    = L2(d);
-        star->arg[0]  = arg1;
-        star->arg[1] += darg1;
+        update_without_modifier(d, arg1, darg1);
     }
     star->requestDisplayUpdate(SP_OBJECT_MODIFIED_FLAG);
+
+}
+
+void
+StarKnotHolderEntity1::knot_set(Geom::Point const &p, Geom::Point const &/*origin*/, unsigned int state)
+{
+    knot_set_internal(p, state);
+}
+
+void
+StarKnotHolderEntity1::update_with_radial_ray_modifier(Geom::Point const &d)
+{
+    get_star()->r[0] = L2(d);
+}
+
+void StarKnotHolderEntity1::update_without_modifier(Geom::Point const &d, double arg1, double darg1)
+{
+    auto star = get_star();
+
+    star->r[0]    = L2(d);
+    star->arg[0]  = arg1;
+    star->arg[1] += darg1;
 }
 
 void
 StarKnotHolderEntity2::knot_set(Geom::Point const &p, Geom::Point const &/*origin*/, unsigned int state)
 {
-    auto star = cast<SPStar>(item);
-    g_assert(star != nullptr);
-
-    Geom::Point const s = snap_knot_position(p, state);
-
-    if (star->flatsided == false) {
-        Geom::Point d = s - star->center;
-
-        double arg1 = atan2(d);
-        double darg1 = arg1 - star->arg[1];
-
-        if (state & GDK_ALT_MASK) {
-            star->randomized = darg1/(star->arg[0] - star->arg[1]);
-        } else if (state & GDK_SHIFT_MASK) {
-            star->rounded = fabs(darg1/(star->arg[0] - star->arg[1]));
-        } else if (state & GDK_CONTROL_MASK) {
-            star->r[1]   = L2(d);
-            star->arg[1] = star->arg[0] + M_PI / star->sides;
-        }
-        else {
-            star->r[1]   = L2(d);
-            star->arg[1] = atan2(d);
-        }
-        star->requestDisplayUpdate(SP_OBJECT_MODIFIED_FLAG);
+    if (!get_star()->flatsided) {
+        knot_set_internal(p, state);
     }
+}
+
+void
+StarKnotHolderEntity2::update_with_radial_ray_modifier(Geom::Point const &d)
+{
+    auto star = get_star();
+    star->r[1]   = L2(d);
+    star->arg[1] = star->arg[0] + M_PI / star->sides;
+}
+
+void StarKnotHolderEntity2::update_without_modifier(Geom::Point const &d, double arg1, double darg1)
+{
+    auto star = get_star();
+    star->r[1]   = L2(d);
+    star->arg[1] = atan2(d);
 }
 
 void
@@ -1647,27 +1675,35 @@ StarKnotHolderEntityCenter::knot_set(Geom::Point const &p, Geom::Point const &/*
     item->requestDisplayUpdate(SP_OBJECT_MODIFIED_FLAG);
 }
 
+SPStar*
+StarKnotHolderEntityVertex::get_star()
+{
+    auto *star = cast<SPStar>(item);
+    g_assert(star != nullptr);
+    return star;
+}
+
 Geom::Point
-StarKnotHolderEntity1::knot_get() const
+StarKnotHolderEntityVertex::knot_get_internal(SPStarPoint starPoint) const
 {
     g_assert(item != nullptr);
 
     SPStar const *star = cast<SPStar>(item);
     g_assert(star != nullptr);
 
-    return sp_star_get_xy(star, SP_STAR_POINT_KNOT1, 0);
+    return sp_star_get_xy(star, starPoint, 0);
+}
 
+Geom::Point
+StarKnotHolderEntity1::knot_get() const
+{
+    return knot_get_internal(SP_STAR_POINT_KNOT1);
 }
 
 Geom::Point
 StarKnotHolderEntity2::knot_get() const
 {
-    g_assert(item != nullptr);
-
-    SPStar const *star = cast<SPStar>(item);
-    g_assert(star != nullptr);
-
-    return sp_star_get_xy(star, SP_STAR_POINT_KNOT2, 0);
+    return knot_get_internal(SP_STAR_POINT_KNOT2);
 }
 
 Geom::Point
@@ -1681,8 +1717,8 @@ StarKnotHolderEntityCenter::knot_get() const
     return star->center;
 }
 
-static void
-sp_star_knot_click(SPItem *item, unsigned int state)
+void
+StarKnotHolderEntityVertex::knot_click(unsigned int state)
 {
     auto star = cast<SPStar>(item);
     g_assert(star != nullptr);
@@ -1697,18 +1733,6 @@ sp_star_knot_click(SPItem *item, unsigned int state)
         star->arg[1] = star->arg[0] + M_PI / star->sides;
         star->updateRepr();
     }
-}
-
-void
-StarKnotHolderEntity1::knot_click(unsigned int state)
-{
-    sp_star_knot_click(item, state);
-}
-
-void
-StarKnotHolderEntity2::knot_click(unsigned int state)
-{
-    sp_star_knot_click(item, state);
 }
 
 StarKnotHolder::StarKnotHolder(SPDesktop *desktop, SPItem *item)
