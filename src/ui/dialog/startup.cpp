@@ -35,6 +35,7 @@
 #include "ui/builder-utils.h"
 #include "ui/dialog/choose-file-utils.h"
 #include "ui/dialog/choose-file.h"
+#include "ui/interface.h" // sp_ui_error_dialog
 #include "ui/shortcuts.h"
 #include "ui/themes.h"
 #include "ui/util.h"
@@ -422,9 +423,17 @@ StartScreen::load_document()
             }
 
             // Now we have file, open document.
-            app->create_window(file);
-            if (auto document = app->get_active_document()) {
+            auto [document, cancelled] = app->document_open(file);
+            if (document) {
                 _finish(document);
+            } else if (!cancelled) {
+                std::cerr << "StartScreen::load_document: Failed to load: " << file->get_parse_name().raw()
+                          << std::endl;
+
+                gchar *text =
+                    g_strdup_printf(_("Failed to load the requested file %s"), file->get_parse_name().c_str());
+                sp_ui_error_dialog(text);
+                g_free(text);
             }
         }
     }
