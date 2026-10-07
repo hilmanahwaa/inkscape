@@ -637,24 +637,24 @@ RectKnotHolder::RectKnotHolder(SPDesktop *desktop, SPItem *item)
     RectKnotHolderEntityCenter *entity_center = new RectKnotHolderEntityCenter();
 
     entity_rx->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_ROTATE, "Rect:rx",
-                      _(("Adjust the <b>horizontal rounding</b> radius; with <b>" + entity_rx->get_mod_label() +
-                         "</b> to make the vertical radius the same")
-                            .c_str()));
+                      Glib::ustring::compose(_("Adjust the <b>horizontal rounding</b> radius; with <b>%1</b> to make the vertical radius the same"),
+                          entity_rx->get_mod_label())
+                            .c_str());
 
     entity_ry->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_ROTATE, "Rect:ry",
-                      _(("Adjust the <b>vertical rounding</b> radius; with <b>" + entity_ry->get_mod_label() +
-                         "</b> to make the horizontal radius the same")
-                            .c_str()));
+                      Glib::ustring::compose(_("Adjust the <b>vertical rounding</b> radius; with <b>%1</b> to make the horizontal radius the same"),
+                         entity_ry->get_mod_label())
+                            .c_str());
 
     entity_wh->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_SIZER, "Rect:wh",
-                      _(("Adjust the <b>width and height</b> of the rectangle; with <b>" + entity_wh->get_mod_label() +
-                         "</b> to lock ratio or stretch in one dimension only")
-                            .c_str()));
+                      Glib::ustring::compose(_("Adjust the <b>width and height</b> of the rectangle; with <b>%1</b> to lock ratio or stretch in one dimension only"),
+                         entity_wh->get_mod_label())
+                            .c_str());
 
     entity_xy->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_SIZER, "Rect:xy",
-                      _(("Adjust the <b>width and height</b> of the rectangle; with <b>" + entity_xy->get_mod_label() +
-                         "</b> to lock ratio or stretch in one dimension only")
-                            .c_str()));
+                      Glib::ustring::compose(_("Adjust the <b>width and height</b> of the rectangle; with <b>%1</b> to lock ratio or stretch in one dimension only"),
+                         entity_xy->get_mod_label())
+                            .c_str());
 
     entity_center->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_MARKER, "Rect:center",
                           _("Drag to move the rectangle"));
@@ -1520,24 +1520,26 @@ ArcKnotHolder::ArcKnotHolder(SPDesktop *desktop, SPItem *item)
     ArcKnotHolderEntityCenter *entity_center = new ArcKnotHolderEntityCenter();
 
     entity_rx->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_SIZER, "Arc:rx",
-                      _(("Adjust ellipse <b>width</b>, with <b>" + entity_rx->get_mod_label() + "</b> to make circle")
-                             .c_str()));
+                      Glib::ustring::compose(_("Adjust ellipse <b>width</b>, with <b>%1</b> to make circle"),
+                          entity_rx->get_mod_label())
+                             .c_str());
 
     entity_ry->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_SIZER, "Arc:ry",
-                      _(("Adjust ellipse <b>height</b>, with <b>" + entity_ry->get_mod_label() + "</b> to make circle")
-                             .c_str()));
+                      Glib::ustring::compose(_("Adjust ellipse <b>height</b>, with <b>%1</b> to make circle"),
+                          entity_ry->get_mod_label())
+                             .c_str());
 
     entity_start->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_ROTATE, "Arc:start",
-                         _(("Position the <b>start point</b> of the arc or segment; with <b>" + entity_start->get_mod_maintaingap_label() + "</b> to move "
-                           "with <b>end point</b>; with <b>" + entity_start->get_mod_moveinc_label() + "</b> to snap angle; drag <b>inside</b> the "
-                           "ellipse for arc, <b>outside</b> for segment")
-                           .c_str()));
+                         Glib::ustring::compose(_("Position the <b>start point</b> of the arc or segment; with <b>%1</b> to move "
+                           "with <b>end point</b>; with <b>%2</b> to snap angle; drag <b>inside</b> the ellipse for arc, <b>outside</b> for segment"),
+                           entity_start->get_mod_maintaingap_label(), entity_start->get_mod_moveinc_label())
+                           .c_str());
 
     entity_end->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_ROTATE, "Arc:end",
-                       _(("Position the <b>end point</b> of the arc or segment; with <b>" + entity_end->get_mod_maintaingap_label() + "</b> to move "
-                         "with <b>start point</b>; with <b>" + entity_end->get_mod_moveinc_label() + "</b> to snap angle; drag <b>inside</b> the "
-                         "ellipse for arc, <b>outside</b> for segment")
-                         .c_str()));
+                       Glib::ustring::compose(_("Position the <b>end point</b> of the arc or segment; with <b>%1</b> to move "
+                         "with <b>start point</b>; with <b>%2</b> to snap angle; drag <b>inside</b> the ellipse for arc, <b>outside</b> for segment"),
+                         entity_end->get_mod_maintaingap_label(), entity_end->get_mod_moveinc_label())
+                         .c_str());
 
     entity_center->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_MARKER, "Arc:center",
                           _("Drag to move the ellipse"));
