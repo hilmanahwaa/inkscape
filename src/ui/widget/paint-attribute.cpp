@@ -969,9 +969,9 @@ bool PaintAttribute::can_update() const {
 void PaintAttribute::update_reset_opacity_button() {
     if (!_current_item || !_current_item->style) return;
 
-    auto& opacity = _current_item->style->opacity;
     // no reset btn available
     //TODO: find place for reset btn
+    // auto& opacity = _current_item->style->opacity;
     // _reset_opacity.set_visible(opacity.inherit || (opacity.set && static_cast<double>(opacity) < 1.0));
 }
 

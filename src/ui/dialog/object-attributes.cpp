@@ -328,14 +328,6 @@ std::optional<double> get_number(SPItem* item, const char* attribute) {
     return item->getRepr()->getAttributeDouble(attribute);
 }
 
-void set_dimension_adj(Widget::InkSpinButton& btn) {
-    btn.set_adjustment(Gtk::Adjustment::create(0, 0, 1'000'000, 1, 5));
-}
-
-void set_location_adj(Widget::InkSpinButton& btn) {
-    btn.set_adjustment(Gtk::Adjustment::create(0, -1'000'000, 1'000'000, 1, 5));
-}
-
 } // namespace
 
 ///////////////////////////////////////////////////////////////////////////////

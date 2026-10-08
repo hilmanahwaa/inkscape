@@ -273,7 +273,7 @@ void set_defocus_target(Gtk::Widget* panel, DefocusTarget* target) {
 void close_parent_popover(Gtk::Widget &widget)
 {
     for (auto &parent : parent_chain(widget) | std::views::drop(1)) {
-        if (auto popover = dynamic_cast<Gtk::Popover *>(&widget)) {
+        if (auto popover = dynamic_cast<Gtk::Popover *>(&parent)) {
             popover->popdown();
             break;
         }
