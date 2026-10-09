@@ -98,6 +98,7 @@ ModifierIdToTypeMap const &modifier_type_from_id()
         {"pen-switch-axis", Type::PEN_SWITCH_AXIS},
         {"pencil-sketch", Type::PENCIL_SKETCH},
         {"star-randomize", Type::STAR_RANDOMIZE},
+        {"star-randomize-reset", Type::STAR_RANDOMIZE_RESET},
         {"tweak-invert", Type::TWEAK_INVERT},
     };
     return static_id_to_type_map;
@@ -163,6 +164,7 @@ Modifier::Container &Modifier::_modifiers()
 
     // Star tool modifier
         make_modifier("star-randomize", _("Star randomize"), _("Change the randomize parameter of the star during a drag"), ALT, STAR_TOOL, DRAG),
+        make_modifier("star-randomize-reset", _("Star randomize reset"), _("Reset the randomize parameter of the star on click"), ALT, STAR_TOOL, CLICK),
 
     // Transform handle modifiers (applies to multiple tools)
         make_modifier("move-confine", _("Move one axis only"), _("When dragging items, confine to either x or y axis"), CTRL, MOVE, DRAG),

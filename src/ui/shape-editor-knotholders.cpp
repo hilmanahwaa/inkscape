@@ -1574,6 +1574,7 @@ protected:
 
 private:
     Modifiers::Modifier *mod_randomize = Modifiers::Modifier::get(Modifiers::Type::STAR_RANDOMIZE);
+    Modifiers::Modifier *mod_randomize_reset = Modifiers::Modifier::get(Modifiers::Type::STAR_RANDOMIZE_RESET);
 };
 
 class StarKnotHolderEntity1 : public StarKnotHolderEntityVertex {
@@ -1735,7 +1736,7 @@ StarKnotHolderEntityVertex::knot_click(unsigned int state)
     auto star = cast<SPStar>(item);
     g_assert(star != nullptr);
 
-    if (state & GDK_ALT_MASK) {
+    if (mod_randomize_reset->active(state)) {
         star->randomized = 0;
         star->updateRepr();
     } else if (state & GDK_SHIFT_MASK) {
