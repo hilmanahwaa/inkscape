@@ -22,6 +22,13 @@
 #include "inkscape-application.h"
 #include "text-chemistry.h"
 
+#include "desktop.h"
+#include "document.h"
+#include "inkscape.h"
+#include "object/sp-root.h"
+#include "ui/tools/text-tool.h"
+#include "xml/repr.h"
+
 void
 selection_text_put_on_path()
 {
@@ -81,6 +88,45 @@ text_unkern()
     text_remove_all_kerns();
 }
 
+void
+text_select()
+{
+    SPDesktop *desktop = SP_ACTIVE_DESKTOP;
+    if (!desktop)
+        return;
+
+    SPStyle const *style = nullptr;
+    std::string font_style;
+
+    // Use the text tool directly if available (currently in use)
+    if (auto text_tool = dynamic_cast<Inkscape::UI::Tools::TextTool*>(desktop->getTool())) {
+        style = text_tool->getSelectedStyle();
+    }
+
+    if (!style || (!style->font_family.set && !style->font_specification.set)) {
+        if (SPItem *text = text_or_flowtext_in_selection(desktop->getSelection())) {
+            style = text->style;
+        } else if (SPCSSAttr *css = desktop->getCurrentOrToolStyle("/tools/text", true)) {
+            if (auto ret = sp_repr_css_property(css, "font-family", nullptr)) {
+                font_style = ret;
+            }
+        }
+    }
+
+    if (style) {
+        if (style->font_family.set) {
+            font_style = style->font_family.value();
+        } else if (style->font_specification.set) {
+            font_style = style->font_specification.value();
+        }
+    }
+    if (!font_style.empty()) {
+        // TODO: Could select the layer instead of the document root here
+        SPObject *root = desktop->getDocument()->getRoot();
+        text_select_by_font(font_style, root);
+    }
+}
+
 const Glib::ustring SECTION = NC_("Action Section", "Text");
 
 std::vector<std::vector<Glib::ustring>> raw_data_text =
@@ -94,7 +140,8 @@ std::vector<std::vector<Glib::ustring>> raw_data_text =
     {"app.text-unflow-and-keep-shape",N_("Unflow and Keep Shape"),  SECTION, N_("Remove text from shape")},
     {"app.text-convert-to-regular",   N_("Convert to Text"),        SECTION, N_("Convert flowed text to regular text object (preserves appearance)")},
     {"app.text-convert-to-glyphs",    N_("Convert to Glyphs"),      SECTION, N_("Convert text into individual glyphs")},
-    {"app.text-unkern",               N_("Remove Manual Kerns"),    SECTION, N_("Remove all manual kerns and glyph rotations from a text object")}
+    {"app.text-unkern",               N_("Remove Manual Kerns"),    SECTION, N_("Remove all manual kerns and glyph rotations from a text object")},
+    {"app.text-select-by-font",       N_("Select text by Font"),    SECTION, N_("Select all text objects which use the selected font, or the last font used.")}
     // clang-format on
 };
 
@@ -113,6 +160,7 @@ add_actions_text(InkscapeApplication* app)
     gapp->add_action( "text-convert-to-regular",     sigc::ptr_fun(text_convert_to_regular));
     gapp->add_action( "text-convert-to-glyphs",      sigc::ptr_fun(text_convert_to_glyphs));
     gapp->add_action( "text-unkern",                 sigc::ptr_fun(text_unkern));
+    gapp->add_action( "text-select-by-font",         sigc::ptr_fun(text_select));
     // clang-format on
 
     app->get_action_extra_data().add_data(raw_data_text);

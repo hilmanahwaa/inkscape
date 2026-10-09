@@ -1130,14 +1130,6 @@ void InkscapePreferences::initPageTools()
     this->AddGradientCheckbox(_page_text, "/tools/text", true);
     {
         auto cb = Gtk::make_managed<PrefCheckButton>();
-        cb->init ( _("Enable cursor Text on Path"), "/tools/text/text_on_path", true);
-        _page_text.add_line( false, "", *cb, "", _("Allow the text tool to put text directly on a path without holding the shift key."));
-
-        cb = Gtk::make_managed<PrefCheckButton>();
-        cb->init ( _("Enable cursor Text in Shape"), "/tools/text/text_in_shape", true);
-        _page_text.add_line( false, "", *cb, "", _("Allow the text tool to flow text directly into a shape without holding the shift key."));
-
-        cb = Gtk::make_managed<PrefCheckButton>();
         cb->init ( _("Show font samples in the drop-down list"), "/tools/text/show_sample_in_list", true);
         _page_text.add_line( false, "", *cb, "", _("Show font samples alongside font names in the drop-down list in Text bar"));
 

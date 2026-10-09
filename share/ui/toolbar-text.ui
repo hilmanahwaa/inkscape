@@ -63,14 +63,31 @@
           </object>
         </child>
         <child>
-          <object class="GtkButton" id="fc_dialog_btn">
+          <object class="GtkBox">
             <property name="valign">center</property>
-            <property name="label" translatable="yes">Open Collections Editor</property>
-            <property name="focusable">True</property>
-            <property name="focus-on-click">False</property>
-            <property name="receives-default">True</property>
-            <property name="tooltip-text" translatable="yes">Open the Font Collections dialog</property>
-            <property name="margin-top">3</property>
+            <property name="orientation">horizontal</property>
+            <property name="spacing">3</property>
+            <child>
+              <object class="GtkButton" id="fc_dialog_btn">
+                <property name="valign">center</property>
+                <property name="label" translatable="yes">Open Collections Editor</property>
+                <property name="focusable">True</property>
+                <property name="focus-on-click">False</property>
+                <property name="receives-default">True</property>
+                <property name="tooltip-text" translatable="yes">Open the Font Collections dialog</property>
+                <property name="margin-top">3</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton" id="reset_btn">
+                <property name="valign">center</property>
+                <property name="focusable">True</property>
+                <property name="focus-on-click">False</property>
+                <property name="tooltip-text" translatable="yes">Reset the font list (Deselects all the font collections and clears search results)</property>
+                <property name="has-frame">False</property>
+                <property name="icon-name">view-refresh</property>
+              </object>
+            </child>
           </object>
         </child>
       </object>
@@ -81,25 +98,30 @@
     <property name="valign">center</property>
     <property name="hexpand">True</property>
     <child>
-      <object class="GtkMenuButton">
-        <property name="valign">center</property>
-        <property name="focusable">True</property>
-        <property name="focus-on-click">False</property>
-        <property name="receives-default">True</property>
-        <property name="tooltip-text" translatable="yes">Select Font Collections</property>
-        <property name="has-frame">False</property>
-        <property name="popover">font_collections_popover</property>
-        <property name="icon-name">font_collections</property>
-      </object>
-    </child>
-    <child>
-      <object class="GtkButton" id="reset_btn">
-        <property name="valign">center</property>
-        <property name="focusable">True</property>
-        <property name="focus-on-click">False</property>
-        <property name="tooltip-text" translatable="yes">Reset the font list (Deselects all the font collections and clears search results)</property>
-        <property name="has-frame">False</property>
-        <property name="icon-name">view-refresh</property>
+      <object class="GtkBox" id="mode_buttons_box">
+        <property name="spacing">3</property>
+        <child>
+          <object class="GtkToggleButton" id="mode_buttons_group">
+            <property name="valign">center</property>
+            <property name="focusable">True</property>
+            <property name="focus-on-click">False</property>
+            <property name="receives-default">True</property>
+            <property name="tooltip-text" translatable="yes">Place text anywhere on the canvas</property>
+            <property name="has-frame">False</property>
+            <property name="icon-name">draw-text</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkToggleButton">
+            <property name="valign">center</property>
+            <property name="focusable">True</property>
+            <property name="focus-on-click">False</property>
+            <property name="tooltip-text" translatable="yes">Place text inside objects or on path edges</property>
+            <property name="has-frame">False</property>
+            <property name="group">mode_buttons_group</property>
+            <property name="icon-name">text-flow-into-frame</property>
+          </object>
+        </child>
       </object>
     </child>
     <child>
