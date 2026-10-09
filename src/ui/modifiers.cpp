@@ -97,6 +97,7 @@ ModifierIdToTypeMap const &modifier_type_from_id()
         {"pen-move-prev", Type::PEN_MOVE_PREV},
         {"pen-switch-axis", Type::PEN_SWITCH_AXIS},
         {"pencil-sketch", Type::PENCIL_SKETCH},
+        {"star-randomize", Type::STAR_RANDOMIZE},
         {"tweak-invert", Type::TWEAK_INVERT},
     };
     return static_id_to_type_map;
@@ -159,6 +160,9 @@ Modifier::Container &Modifier::_modifiers()
 
     // Arc tool modifier
         make_modifier("arc-maintain-gap", _("Maintain gap"), _("Move both start and end knot of the arc"), SHIFT, ARC_TOOL, DRAG),
+
+    // Star tool modifier
+        make_modifier("star-randomize", _("Star randomize"), _("Change the randomize parameter of the star during a drag"), ALT, STAR_TOOL, DRAG),
 
     // Transform handle modifiers (applies to multiple tools)
         make_modifier("move-confine", _("Move one axis only"), _("When dragging items, confine to either x or y axis"), CTRL, MOVE, DRAG),
@@ -239,6 +243,7 @@ Modifier::CategoryNames const &Modifier::_category_names()
         {NODE_TOOL, _("Node Tool")},
         {BOOLEANS_TOOL, _("Shape Builder")},
         {ARC_TOOL, _("Ellipse/Arc Tool")},
+        {STAR_TOOL, _("Star Tool")},
         {BOX3D_TOOL, _("3D Box Tool")},
         {CALLI_TOOL, _("Calligraphy Tool")},
         {DROPPER_TOOL, _("Dropper Tool")},

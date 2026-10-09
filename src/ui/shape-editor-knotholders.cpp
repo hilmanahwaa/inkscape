@@ -1561,6 +1561,9 @@ public:
     void knot_ungrabbed(Geom::Point const &p, Geom::Point const &origin, guint state) override {};
     void knot_click(unsigned int state) override;
 
+    std::string get_modrandomize_label() const { return mod_randomize->get_label(); }
+
+
 protected:
     SPStar* get_star();
     Geom::Point knot_get_internal(SPStarPoint starPoint) const;
@@ -1568,6 +1571,9 @@ protected:
     virtual double get_knot_arg() = 0;
     virtual void update_with_radial_ray_modifier(Geom::Point const &d) = 0;
     virtual void update_without_modifier(Geom::Point const &d, double arg1, double darg1) = 0;
+
+private:
+    Modifiers::Modifier *mod_randomize = Modifiers::Modifier::get(Modifiers::Type::STAR_RANDOMIZE);
 };
 
 class StarKnotHolderEntity1 : public StarKnotHolderEntityVertex {
@@ -1613,7 +1619,7 @@ void StarKnotHolderEntityVertex::knot_set_internal(Geom::Point const &p, unsigne
     const double epsilon = 0.000001;
     double denominator = star->arg[0] - star->arg[1];
     denominator = fabs(denominator) < epsilon ? epsilon : denominator;
-    if (state & GDK_ALT_MASK) {
+    if (mod_randomize->active(state)) {
         star->randomized = darg1/denominator;
     } else if (state & GDK_SHIFT_MASK) {
         star->rounded = darg1/denominator;
@@ -1749,16 +1755,20 @@ StarKnotHolder::StarKnotHolder(SPDesktop *desktop, SPItem *item)
 
     StarKnotHolderEntity1 *entity1 = new StarKnotHolderEntity1();
     entity1->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_SHAPER, "Star:entity1",
-                    _("Adjust the <b>tip radius</b> of the star or polygon; "
-                      "with <b>Shift</b> to round; with <b>Alt</b> to randomize"));
+                    Glib::ustring::compose(_("Adjust the <b>tip radius</b> of the star or polygon; "
+                      "with <b>Shift</b> to round; with <b>%1</b> to randomize"),
+                      entity1->get_modrandomize_label())
+                      .c_str());
 
     entity.push_back(entity1);
 
     if (star->flatsided == false) {
         StarKnotHolderEntity2 *entity2 = new StarKnotHolderEntity2();
         entity2->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_SHAPER, "Star:entity2",
-                        _("Adjust the <b>base radius</b> of the star; with <b>Ctrl</b> to keep star rays "
-                          "radial (no skew); with <b>Shift</b> to round; with <b>Alt</b> to randomize"));
+                        Glib::ustring::compose(_("Adjust the <b>base radius</b> of the star; with <b>Ctrl</b> to keep star rays "
+                          "radial (no skew); with <b>Shift</b> to round; with <b>%1</b> to randomize"),
+                          entity2->get_modrandomize_label())
+                          .c_str());
         entity.push_back(entity2);
     }
 

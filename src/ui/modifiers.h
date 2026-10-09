@@ -143,6 +143,8 @@ enum class Type {
 
     PENCIL_SKETCH,        // Enables sketch mode {DRAG+ALT}
 
+    STAR_RANDOMIZE,       // Randomize the star {DRAG+ALT}
+
     TWEAK_INVERT,         // Reverse the direction of the tweak {CLICK+SHIFT}
 
     // TODO: Alignment omitted because it's UX is not completed
