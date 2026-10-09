@@ -144,6 +144,7 @@ enum class Type {
     PENCIL_SKETCH,        // Enables sketch mode {DRAG+ALT}
 
 
+    STAR_RADIAL_DRAG,     // Drag on the star radius {DRAG+CTRL}
     STAR_RANDOMIZE,       // Randomize the star {DRAG+ALT}
     STAR_RANDOMIZE_RESET, // Reset the star randomization {CLICK+ALT}
 
