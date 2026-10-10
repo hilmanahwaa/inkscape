@@ -1576,6 +1576,7 @@ private:
     Modifiers::Modifier *mod_randomize = Modifiers::Modifier::get(Modifiers::Type::STAR_RANDOMIZE);
     Modifiers::Modifier *mod_randomize_reset = Modifiers::Modifier::get(Modifiers::Type::STAR_RANDOMIZE_RESET);
     Modifiers::Modifier *mod_radial_drag = Modifiers::Modifier::get(Modifiers::Type::STAR_RADIAL_DRAG);
+    Modifiers::Modifier *mod_radial_reset = Modifiers::Modifier::get(Modifiers::Type::STAR_RADIAL_RESET);
 };
 
 class StarKnotHolderEntity1 : public StarKnotHolderEntityVertex {
@@ -1743,7 +1744,7 @@ StarKnotHolderEntityVertex::knot_click(unsigned int state)
     } else if (state & GDK_SHIFT_MASK) {
         star->rounded = 0;
         star->updateRepr();
-    } else if (state & GDK_CONTROL_MASK) {
+    } else if (mod_radial_reset->active(state)) {
         star->arg[1] = star->arg[0] + M_PI / star->sides;
         star->updateRepr();
     }

@@ -98,6 +98,7 @@ ModifierIdToTypeMap const &modifier_type_from_id()
         {"pen-switch-axis", Type::PEN_SWITCH_AXIS},
         {"pencil-sketch", Type::PENCIL_SKETCH},
         {"star-radial-drag", Type::STAR_RADIAL_DRAG},
+        {"star-radial-reset", Type::STAR_RADIAL_RESET},
         {"star-randomize", Type::STAR_RANDOMIZE},
         {"star-randomize-reset", Type::STAR_RANDOMIZE_RESET},
         {"tweak-invert", Type::TWEAK_INVERT},
@@ -165,6 +166,7 @@ Modifier::Container &Modifier::_modifiers()
 
     // Star tool modifier
         make_modifier("star-radial-drag", _("Star radial drag"), _("Keep star rays radial (no skew) during a drag"), CTRL, STAR_TOOL, DRAG),
+        make_modifier("star-radial-reset", _("Star radial reset"), _("Reset the star skew on click"), CTRL, STAR_TOOL, CLICK),
         make_modifier("star-randomize", _("Star randomize"), _("Change the randomize parameter of the star during a drag"), ALT, STAR_TOOL, DRAG),
         make_modifier("star-randomize-reset", _("Star randomize reset"), _("Reset the randomize parameter of the star on click"), ALT, STAR_TOOL, CLICK),
 
