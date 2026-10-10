@@ -1565,6 +1565,7 @@ protected:
     SPStar* get_star();
     Geom::Point knot_get_internal(SPStarPoint starPoint) const;
     void knot_set_internal(Geom::Point const &p, unsigned int state);
+    virtual double get_knot_arg() = 0;
     virtual void update_with_radial_ray_modifier(Geom::Point const &d) = 0;
     virtual void update_without_modifier(Geom::Point const &d, double arg1, double darg1) = 0;
 };
@@ -1577,6 +1578,7 @@ public:
 protected:
     void update_with_radial_ray_modifier(Geom::Point const &d) override;
     void update_without_modifier(Geom::Point const &d, double arg1, double darg1) override;
+    double get_knot_arg() override { return get_star()->arg[0]; }
 };
 
 class StarKnotHolderEntity2 : public StarKnotHolderEntityVertex {
@@ -1587,6 +1589,7 @@ public:
 protected:
     void update_with_radial_ray_modifier(Geom::Point const &d) override;
     void update_without_modifier(Geom::Point const &d, double arg1, double darg1) override;
+    double get_knot_arg() override { return get_star()->arg[1]; }
 };
 
 class StarKnotHolderEntityCenter : public KnotHolderEntity {
@@ -1605,7 +1608,7 @@ void StarKnotHolderEntityVertex::knot_set_internal(Geom::Point const &p, unsigne
     Geom::Point d = s - star->center;
 
     double arg1 = atan2(d);
-    double darg1 = arg1 - star->arg[0];
+    double darg1 = arg1 - get_knot_arg();
 
     const double epsilon = 0.000001;
     double denominator = star->arg[0] - star->arg[1];
