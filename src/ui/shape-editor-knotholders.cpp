@@ -1563,6 +1563,7 @@ public:
 
     std::string get_modrandomize_label() const { return mod_randomize->get_label(); }
     std::string get_radialdrag_label() const { return mod_radial_drag->get_label(); }
+    std::string get_rounddrag_label() const { return mod_round_drag->get_label(); }
 
 protected:
     SPStar* get_star();
@@ -1577,6 +1578,7 @@ private:
     Modifiers::Modifier *mod_randomize_reset = Modifiers::Modifier::get(Modifiers::Type::STAR_RANDOMIZE_RESET);
     Modifiers::Modifier *mod_radial_drag = Modifiers::Modifier::get(Modifiers::Type::STAR_RADIAL_DRAG);
     Modifiers::Modifier *mod_radial_reset = Modifiers::Modifier::get(Modifiers::Type::STAR_RADIAL_RESET);
+    Modifiers::Modifier *mod_round_drag = Modifiers::Modifier::get(Modifiers::Type::STAR_ROUNDING_DRAG);
 };
 
 class StarKnotHolderEntity1 : public StarKnotHolderEntityVertex {
@@ -1624,7 +1626,7 @@ void StarKnotHolderEntityVertex::knot_set_internal(Geom::Point const &p, unsigne
     denominator = fabs(denominator) < epsilon ? epsilon : denominator;
     if (mod_randomize->active(state)) {
         star->randomized = darg1/denominator;
-    } else if (state & GDK_SHIFT_MASK) {
+    } else if (mod_round_drag->active(state)) {
         star->rounded = darg1/denominator;
     } else if (mod_radial_drag->active(state)) {
         update_with_radial_ray_modifier(d);
@@ -1759,8 +1761,8 @@ StarKnotHolder::StarKnotHolder(SPDesktop *desktop, SPItem *item)
     StarKnotHolderEntity1 *entity1 = new StarKnotHolderEntity1();
     entity1->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_SHAPER, "Star:entity1",
                     Glib::ustring::compose(_("Adjust the <b>tip radius</b> of the star or polygon; "
-                      "with <b>Shift</b> to round; with <b>%1</b> to randomize"),
-                      entity1->get_modrandomize_label())
+                      "with <b>%1</b> to round; with <b>%2</b> to randomize"),
+                      entity1->get_rounddrag_label(), entity1->get_modrandomize_label())
                       .c_str());
 
     entity.push_back(entity1);
@@ -1769,8 +1771,8 @@ StarKnotHolder::StarKnotHolder(SPDesktop *desktop, SPItem *item)
         StarKnotHolderEntity2 *entity2 = new StarKnotHolderEntity2();
         entity2->create(desktop, item, this, Inkscape::CANVAS_ITEM_CTRL_TYPE_SHAPER, "Star:entity2",
                         Glib::ustring::compose(_("Adjust the <b>base radius</b> of the star; with <b>%1</b> to keep star rays "
-                          "radial (no skew); with <b>Shift</b> to round; with <b>%2</b> to randomize"),
-                          entity2->get_radialdrag_label(), entity2->get_modrandomize_label())
+                          "radial (no skew); with <b>%2</b> to round; with <b>%3</b> to randomize"),
+                          entity2->get_radialdrag_label(), entity2->get_rounddrag_label(), entity2->get_modrandomize_label())
                           .c_str());
         entity.push_back(entity2);
     }
