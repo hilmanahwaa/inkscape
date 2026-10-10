@@ -149,6 +149,7 @@ enum class Type {
     STAR_RANDOMIZE,       // Randomize the star {DRAG+ALT}
     STAR_RANDOMIZE_RESET, // Reset the star randomization {CLICK+ALT}
     STAR_ROUNDING_DRAG,   // Round the vertexes of the star {DRAG+SHIFT}
+    STAR_ROUNDING_RESET,  // Reset the star rounding {CLICK+SHIFT}
 
     TWEAK_INVERT,         // Reverse the direction of the tweak {CLICK+SHIFT}
 
