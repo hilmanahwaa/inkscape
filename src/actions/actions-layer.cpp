@@ -408,6 +408,11 @@ layer_to_group (InkscapeWindow* win)
         return;
     }
 
+    if (!layer->isHighlightSet()) {
+        // Layers choose their default color differently than groups, so remember the current color
+        // here to prevent it changing after the conversion.
+        layer->setHighlight(layer->highlight_color());
+    }
     layer->setLayerMode(SPGroup::GROUP);
     layer->updateRepr(SP_OBJECT_WRITE_NO_CHILDREN | SP_OBJECT_WRITE_EXT);
     dt->getSelection()->set(layer);
