@@ -112,13 +112,22 @@
       </object>
     </child>
     <child>
+      <object class="GtkLabel">
+        <property name="label" translatable="yes">Units</property>
+        <layout>
+          <property name="column">0</property>
+          <property name="row">2</property>
+        </layout>
+      </object>
+    </child>
+    <child>
       <object class="GtkBox" id="size-units">
         <property name="halign">start</property>
         <property name="valign">center</property>
         <layout>
-          <property name="column">1</property>
-          <property name="row">0</property>
-          <property name="row-span">2</property>
+          <property name="column">2</property>
+          <property name="row">2</property>
+          <property name="column-span">2</property>
         </layout>
       </object>
     </child>
