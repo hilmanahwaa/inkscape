@@ -37,7 +37,7 @@ class MultiMarkerColorPlate : public Gtk::Box
 public:
     explicit MultiMarkerColorPlate(Colors::ColorSet const &colors);
 
-    void setColors(std::vector<Color> colors) { _color_wheel->setColors(std::move(colors)); }
+    void setColors(std::vector<Color> colors , bool fire_signal = true ) { _color_wheel->setColors(std::move(colors),fire_signal); }
     void setLightness(double value)
     {
         _color_wheel->setLightness(value);

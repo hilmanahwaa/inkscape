@@ -771,7 +771,7 @@ bool MultiMarkerWheel::setColor(Color const &, bool, bool)
  * and resets the color wheel then repopulates it with the new colors
  * then emit the color changed signal 
  */
-void MultiMarkerWheel::setColors(std::vector<Colors::Color> colors)
+void MultiMarkerWheel::setColors(std::vector<Colors::Color> colors, bool fire_signal)
 {
     _values_vector = std::move(colors);
     for (auto &col : _values_vector) {
@@ -781,7 +781,11 @@ void MultiMarkerWheel::setColors(std::vector<Colors::Color> colors)
     _markers_points.clear();
     _markers_points.resize(_values_vector.size());
     _active_index = _values_vector.empty() ? -1 : 0;
-    color_changed();
+    if (fire_signal)
+        color_changed();
+    else
+        queue_drawing_area_draw();
+
 }
 
 /**

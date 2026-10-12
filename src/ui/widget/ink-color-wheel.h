@@ -236,7 +236,7 @@ public:
     MultiMarkerWheel();
     MultiMarkerWheel(BaseObjectType *cobject, Glib::RefPtr<Gtk::Builder> const &builder);
     bool setColor(Colors::Color const &color, bool overrideHue = true, bool emit = true) override;
-    void setColors(std::vector<Colors::Color> colors);
+    void setColors(std::vector<Colors::Color> colors , bool fire_signal = true);
     Colors::Color getColor() const override
     {
         if (!_values_vector.empty() && _active_index >= 0 && _active_index < _values_vector.size())

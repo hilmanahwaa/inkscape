@@ -66,11 +66,10 @@ RecolorArt::RecolorArt(Glib::RefPtr<Gtk::Builder> const &builder)
             if (!_manager.getColor(index)) {
                 return;
             }
-            _current_color_id = _manager.getColor(index)->toRGBA();
-            auto idx = findColorItemByKey(_current_color_id);
+            auto color_id = _manager.getColor(index)->toRGBA();
+            auto idx = findColorItemByKey(color_id);
             _selection_model->set_selected(idx.second);
             onColorPickerChanged(c, true);
-            onOriginalColorClicked(_current_color_id);
             if (_color_wheel->getHueLock()) {
                 if (_manager.isColorsEmpty()) {
                     return;
@@ -93,7 +92,9 @@ RecolorArt::RecolorArt(Glib::RefPtr<Gtk::Builder> const &builder)
             if (!_manager.getColor(index)) {
                 return;
             }
-            _current_color_id = _manager.getColor(index)->toRGBA();
+            /*commented because it was ruining tthe condition in onOriginalColorClicked() 
+            and didnt reset undo stack key for the color wheel might broke something in future though not sure :(*/
+            // _current_color_id = _manager.getColor(index)->toRGBA();
         }
     });
 
@@ -188,13 +189,11 @@ RecolorArt::RecolorArt(Glib::RefPtr<Gtk::Builder> const &builder)
             original_click->signal_pressed().connect(
                 [this, item, index = list_item->get_position()](int n_press, double x, double y) {
                     _selection_model->set_selected(index);
-                    onOriginalColorClicked(item->key);
                 });
 
             recolored_click->signal_pressed().connect(
                 [this, item, index = list_item->get_position()](int n_press, double x, double y) {
                     _selection_model->set_selected(index);
-                    onOriginalColorClicked(item->key);
                 });
 
             original->add_controller(original_click);
@@ -237,6 +236,7 @@ void RecolorArt::setDesktop(SPDesktop *desktop)
     }
 
     if (_desktop) {
+        _desktop->getDocument()->removeUndoObserver(*this);
         _sel_changed_conn.disconnect();
         _desktop_destroyed_conn.disconnect();
 
@@ -244,13 +244,15 @@ void RecolorArt::setDesktop(SPDesktop *desktop)
 
         if (!_is_preview) {
             _manager.convertToRecoloredColors();
-            DocumentUndo::done(_desktop->getDocument(), RC_("Undo", "Change item color"), INKSCAPE_ICON("object-recolor-art"));
+            DocumentUndo::done(_desktop->getDocument(), RC_("Undo", "Change item color"),
+                               INKSCAPE_ICON("object-recolor-art"));
         }
     }
 
     _desktop = desktop;
 
     if (_desktop) {
+        _desktop->getDocument()->addUndoObserver(*this);
         _desktop->setHideSelectionBoxes(true);
 
         _desktop_destroyed_conn = _desktop->connectDestroy([this] (auto) {
@@ -396,6 +398,10 @@ void RecolorArt::setUpTypeBox(Gtk::Box *box, Color const &color)
  */
 void RecolorArt::onOriginalColorClicked(uint32_t color_id)
 {
+    if (_desktop && !_color_wheel->getHueLock() && _current_color_id != color_id) {
+        // diffrenet colors diffrent undo/redo events not all changes of all colors at once
+        DocumentUndo::resetKey(_desktop->getDocument());
+    }
     if (!_manager.isColorsEmpty()) {
         int index = _manager.getColorIndex(color_id);
         if (index > -1) {
@@ -602,8 +608,6 @@ void RecolorArt::updateFromSelection()
     _manager = collect_colours(vec);
     if (!_manager.isColorsEmpty()) {
         generateVisualList();
-        auto first_button_id = _manager.getFirstKey();
-        onOriginalColorClicked(first_button_id);
         _color_wheel->setColors(_manager.getColors());
     }
 }
@@ -624,10 +628,41 @@ void RecolorArt::showForObject(SPDesktop *desktop, SPObject *object)
     _manager = collect_colours({object});
     if (!_manager.isColorsEmpty()) {
         generateVisualList();
-        auto first_button_id = _manager.getFirstKey();
-        onOriginalColorClicked(first_button_id);
         _color_wheel->setColors(_manager.getColors());
     }
 }
+
+void RecolorArt::updateVisualListAfterUndoRedo() {
+    auto selection = _desktop->getSelection();
+    auto items = selection->items();
+    auto vec = std::vector<SPObject *>(items.begin(), items.end());
+    auto temp = collect_colours(vec);
+    auto new_colors = temp.getColors();
+    _manager.setSelectedNewColor(new_colors);
+    updateColorModel(new_colors);
+    _color_wheel->setColors(new_colors,false); // false so it doesn't fire change signal and clear redo stack
+}
+
+void RecolorArt::notifyUndoEvent(Event *log)
+{
+    if (log->icon_name != INKSCAPE_ICON("object-recolor-art"))
+        return;
+    updateVisualListAfterUndoRedo();
+}
+
+void RecolorArt::notifyRedoEvent(Event *log)
+{
+    if (log->icon_name != INKSCAPE_ICON("object-recolor-art"))
+        return;
+        updateVisualListAfterUndoRedo();
+}
+
+void RecolorArt::notifyUndoCommitEvent(Event *log) {}
+
+void RecolorArt::notifyUndoExpired(Event *log) {}
+
+void RecolorArt::notifyClearUndoEvent() {}
+
+void RecolorArt::notifyClearRedoEvent() {}
 
 } // namespace Inkscape::UI::Widget

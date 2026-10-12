@@ -25,6 +25,10 @@
 #include "object-colors.h"
 #include "ui/operation-blocker.h"
 #include "ui/widget/ink-color-wheel.h"
+#include "undo-stack-observer.h"
+#include "event.h"
+#include "document.h"
+
 
 namespace Inkscape::Colors {
 class Color;
@@ -60,7 +64,7 @@ struct ColorItem : public Glib::Object
     }
 };
 
-class RecolorArt : public Gtk::Box
+class RecolorArt : public Gtk::Box , public UndoStackObserver
 {
 public:
     RecolorArt();
@@ -69,6 +73,15 @@ public:
     void showForObject(SPDesktop *desktop, SPObject *object);
 
     void onResetClicked();
+
+
+    void notifyUndoEvent(Event *log);
+    void notifyRedoEvent(Event *log);
+    void notifyUndoCommitEvent(Event *log);
+    void notifyUndoExpired(Event *log);
+    void notifyClearUndoEvent();
+    void notifyClearRedoEvent();
+
 
 private:
     RecolorArt(Glib::RefPtr<Gtk::Builder> const &builder);
@@ -103,6 +116,7 @@ private:
     void updateFromSelection();
 
     void generateVisualList();
+    void updateVisualListAfterUndoRedo();
     void layoutColorPicker(std::shared_ptr<Colors::ColorSet> updated_color = nullptr);
     void colorButtons(Gtk::Box *button, Colors::Color color, bool is_original = false);
 
