@@ -61,6 +61,9 @@ public:
     void setDesktop(SPDesktop *desktop) override;
     void setActiveUnit(Util::Unit const *unit) override;
 
+protected:
+    void documentReplaced() override;
+
 private:
     NodeToolbar(Glib::RefPtr<Gtk::Builder> const &builder);
 
@@ -91,6 +94,7 @@ private:
     sigc::connection c_selection_changed;
     sigc::connection c_selection_modified;
     sigc::connection c_subselection_changed;
+    sigc::scoped_connection _page_origin_conn;
 
     void value_changed(Glib::ustring const &name, Glib::RefPtr<Gtk::Adjustment> const &adj);
     void sel_changed(Selection *selection);

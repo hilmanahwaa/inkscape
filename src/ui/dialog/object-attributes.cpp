@@ -81,6 +81,7 @@
 #include "object/sp-text.h"
 #include "object/sp-textpath.h"
 #include "object/sp-use.h"
+#include "page-manager.h"
 #include "ui/builder-utils.h"
 #include "ui/controller.h"
 #include "ui/gridview-utils.h"
@@ -791,10 +792,13 @@ void details::AttributesPanel::set_document(SPDocument* document) {
         _paint->set_document(document);
     }
     _resource_changed.disconnect();
+    _page_origin_changed.disconnect();
     if (document) {
         _resource_changed = document->connectResourcesChanged("filter", [this]{
             update_filters(_current_object);
         });
+        _page_origin_changed = document->getPageManager().connectSelectedPageOriginChanged(
+            sigc::mem_fun(*this, &details::AttributesPanel::update_size_location));
     }
 }
 

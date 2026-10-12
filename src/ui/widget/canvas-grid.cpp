@@ -337,11 +337,9 @@ void CanvasGrid::updateRulers()
 
     Geom::Rect viewbox = _canvas->get_area_world();
     Geom::Rect startbox = viewbox;
-    if (document->get_origin_follows_page()) {
-        // Move viewbox according to the selected page's position (if any)
-        auto page_transform = pm.getSelectedPageAffine().inverse() * desktop->d2w();
-        startbox += page_transform.translation();
-    }
+    // Move viewbox according to the selected page's position
+    auto page_transform = pm.getSelectedPageOriginAffine().inverse() * desktop->d2w();
+    startbox += page_transform.translation();
 
     // Scale coordinates to current display units
     auto d2c_scalerot = _canvas->get_affine();

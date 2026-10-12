@@ -65,6 +65,10 @@ PageManager::PageManager(SPDocument *document)
             }
         }
     });
+    // Watch the document for modifications, so that if its NamedView "origin-correction" attr changes, we pick it up
+    _doc_modified_conn = _document->connectModified([this](unsigned int) {
+        _selected_page_origin_changed_signal.emit();
+    });
 }
 
 PageManager::~PageManager()
@@ -367,9 +371,18 @@ Geom::Rect PageManager::getSelectedPageRect() const
     return _selected_page ? _selected_page->getDesktopRect() : *(_document->preferredBounds());
 }
 
-Geom::Affine PageManager::getSelectedPageAffine() const
+Geom::Point PageManager::getSelectedPageOrigin() const
 {
-    return _selected_page ? _selected_page->getDesktopAffine() : Geom::identity();
+    if (_document->get_origin_follows_page() && _selected_page) {
+        return _selected_page->getDesktopRect().min();
+    } else {
+        return {};
+    }
+}
+
+Geom::Translate PageManager::getSelectedPageOriginAffine() const
+{
+    return Geom::Translate(getSelectedPageOrigin());
 }
 
 /**
@@ -400,12 +413,17 @@ bool PageManager::selectPage(SPPage *page)
         if (_selected_page != page) {
             _selected_page = page;
             _page_selected_signal.emit(_selected_page);
+            _selected_page_origin_changed_signal.emit();
 
             // Modified signal for when the attributes themselves are modified.
             _page_modified_connection.disconnect();
             if (page) {
-                _page_modified_connection = page->connectModified([this](SPObject *, unsigned int) {
+                _page_modified_connection = page->connectModified([this](SPObject *, unsigned int flags) {
                     _page_modified_signal.emit(_selected_page);
+                    // Page rect might have changed, so notify for a possible origin change
+                    if (flags & SP_OBJECT_MODIFIED_FLAG) {
+                        _selected_page_origin_changed_signal.emit();
+                    }
                 });
             }
 
