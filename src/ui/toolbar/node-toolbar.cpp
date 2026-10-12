@@ -126,6 +126,17 @@ void NodeToolbar::setDesktop(SPDesktop *desktop)
         });
 
         sel_changed(desktop->getSelection());
+    }
+}
+
+void NodeToolbar::documentReplaced()
+{
+    _page_origin_conn.disconnect();
+    if (_desktop) {
+        auto &pm = _desktop->getDocument()->getPageManager();
+        _page_origin_conn = pm.connectSelectedPageOriginChanged([this]{
+            coord_changed(get_node_tool()->_selected_nodes);
+        });
         coord_changed(get_node_tool()->_selected_nodes);
     }
 }
@@ -178,12 +189,10 @@ void NodeToolbar::value_changed(Glib::ustring const &name, Glib::RefPtr<Gtk::Adj
         auto d = name == "x" ? Geom::X : Geom::Y;
         double oldval = pwb->midpoint()[d];
 
-        // Adjust the coordinate to the current page, if needed
+        // Adjust the coordinate to the current page
         auto &pm = _desktop->getDocument()->getPageManager();
-        if (_desktop->getDocument()->get_origin_follows_page()) {
-            auto page = pm.getSelectedPageRect();
-            oldval -= page.corner(0)[d];
-        }
+        auto origin = pm.getSelectedPageOrigin();
+        oldval -= origin[d];
 
         Geom::Point delta;
         delta[d] = val - oldval;
@@ -240,10 +249,7 @@ void NodeToolbar::coord_changed(ControlPointSelection *selected_nodes)
         Geom::Point mid = selected_nodes->pointwiseBounds()->midpoint();
 
         // Adjust shown coordinate according to the selected page
-        if (_desktop->getDocument()->get_origin_follows_page()) {
-            auto &pm = _desktop->getDocument()->getPageManager();
-            mid *= pm.getSelectedPageAffine().inverse();
-        }
+        mid *= _desktop->getDocument()->getPageManager().getSelectedPageOriginAffine().inverse();
 
         if (oldx != mid.x()) {
             adj_x->set_value(Quantity::convert(mid.x(), "px", unit));

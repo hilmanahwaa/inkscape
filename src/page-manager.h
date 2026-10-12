@@ -65,7 +65,8 @@ public:
     int getPageIndex(const SPPage *page) const;
     int getSelectedPageIndex() const;
     Geom::Rect getSelectedPageRect() const;
-    Geom::Affine getSelectedPageAffine() const;
+    Geom::Point getSelectedPageOrigin() const;
+    Geom::Translate getSelectedPageOriginAffine() const;
     Geom::Point nextPageLocation() const;
     SPPage *findPageAt(Geom::Point pos) const;
 
@@ -118,6 +119,9 @@ public:
     {
         return _page_selected_signal.connect(slot);
     }
+    /**
+    * connectPageModified tracks changes to the selected page only.
+    */
     sigc::connection connectPageModified(const sigc::slot<void (SPPage *)> &slot)
     {
         return _page_modified_signal.connect(slot);
@@ -125,6 +129,14 @@ public:
     sigc::connection connectPagesChanged(const sigc::slot<void (SPPage *)> &slot)
     {
         return _pages_changed_signal.connect(slot);
+    }
+    /**
+    * connectSelectedPageOriginChanged notifies you if the result of getSelectedPageOrigin() may have changed.
+    * A lot of conditions feed into this (page location, document-wide preferences, etc), so use this to track it.
+    */
+    sigc::connection connectSelectedPageOriginChanged(const sigc::slot<void ()> &slot)
+    {
+        return _selected_page_origin_changed_signal.connect(slot);
     }
 
     Colors::Color const &getBackgroundColor() const { return background_color; }
@@ -155,9 +167,11 @@ private:
     sigc::signal<void (SPPage *)> _page_selected_signal;
     sigc::signal<void (SPPage *)> _page_modified_signal;
     sigc::signal<void (SPPage *)> _pages_changed_signal;
+    sigc::signal<void ()> _selected_page_origin_changed_signal;
 
     sigc::connection _page_modified_connection;
     sigc::scoped_connection _resources_changed;
+    sigc::scoped_connection _doc_modified_conn;
 
     Colors::Color background_color;
     Colors::Color margin_color;
