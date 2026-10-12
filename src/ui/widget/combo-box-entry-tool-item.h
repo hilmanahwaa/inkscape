@@ -107,7 +107,7 @@ private:
 
     bool _combo_box_changed_cb_blocked = false;
 
-    sigc::scoped_connection idle_conn;
+    sigc::scoped_connection _idle_conn;
 
     sigc::signal<void ()> _signal_changed;
 
@@ -115,7 +115,7 @@ private:
     void defocus();
 
     void combo_box_changed_cb();
-    bool combo_box_popup_cb();
+    void combo_box_popup_cb();
     bool set_cell_markup();
     void entry_activate_cb();
     bool match_selected_cb(Gtk::TreeModel::iterator const &iter);
