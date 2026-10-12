@@ -20,7 +20,7 @@
  * Copyright (C) 2004 David Turner
  * Copyright (C) 2003 MenTaLguY
  * Copyright (C) 2001-2002 Ximian, Inc.
- * Copyright (C) 1999-2013 authors
+ * Copyright (C) 1999-2026 authors
  * Copyright (C) 2017 Tavmjong Bah
  *
  * Released under GNU GPL v2+, read the file 'COPYING' for more information.
@@ -204,6 +204,18 @@ TextToolbar::TextToolbar(Glib::RefPtr<Gtk::Builder> const &builder)
     configure_mode_buttons(_direction_buttons, get_widget<Gtk::Box>(builder, "direction_buttons_box"),
                            "direction_mode", &TextToolbar::direction_changed);
 
+    _mode_menus = {
+        {&get_widget<Gtk::MenuButton>(builder, "horizontal_align_menu"), _alignment_buttons,
+         {"format-justify-left", "format-justify-center", "format-justify-right", "format-justify-fill"}},
+        {&get_widget<Gtk::MenuButton>(builder, "writing_mode_menu"), _writing_buttons,
+         {"frmt-text-direction-horizontal", "frmt-text-direction-vertical", "frmt-text-direction-vertical-lr"}},
+        {&get_widget<Gtk::MenuButton>(builder, "orientation_menu"), _orientation_buttons,
+         {"text-orientation-auto", "text-orientation-upright", "text-orientation-sideways"}},
+        {&get_widget<Gtk::MenuButton>(builder, "direction_menu"), _direction_buttons,
+         {"frmt-text-direction-horizontal", "frmt-text-direction-r2l"}},
+    };
+    update_mode_menu_icons();
+
     auto const fontlister = FontLister::get_instance();
 
     font_count_changed_connection = fontlister->connectUpdate([this] {
@@ -355,6 +367,29 @@ void TextToolbar::configure_mode_buttons(std::vector<Gtk::ToggleButton *> &butto
     auto const path = "/tools/text/" + name;
     int const active_button_index = Preferences::get()->getInt(path, 0);
     buttons[active_button_index < buttons.size() ? active_button_index : 0]->set_active(true);
+}
+
+void TextToolbar::update_mode_menu_icons()
+{
+    for (auto &menu : _mode_menus) {
+        if (!menu.button) continue;
+        for (size_t i = 0; i < menu.options.size() && i < menu.icons.size(); ++i) {
+            if (menu.options[i] && menu.options[i]->get_active()) {
+                menu.button->set_icon_name(menu.icons[i]);
+                auto tip = menu.options[i]->get_tooltip_text();
+                if (!tip.empty()) menu.button->set_tooltip_text(tip);
+                break;
+            }
+        }
+    }
+}
+
+void TextToolbar::close_mode_menus()
+{
+    for (auto &menu : _mode_menus) {
+        if (menu.button) menu.button->popdown();
+    }
+    onDefocus();
 }
 
 void TextToolbar::text_outer_set_style(SPCSSAttr *css)
@@ -775,7 +810,7 @@ void TextToolbar::align_mode_changed(int align_mode)
         DocumentUndo::done(_desktop->getDocument(), RC_("Undo", "Text: Change alignment"), INKSCAPE_ICON("draw-text"));
     }
 
-    onDefocus();
+    close_mode_menus();
 
     _freeze = false;
 }
@@ -810,7 +845,7 @@ void TextToolbar::writing_mode_changed(int mode)
     }
     sp_repr_css_attr_unref(css);
 
-    onDefocus();
+    close_mode_menus();
 
     _freeze = false;
 }
@@ -844,7 +879,7 @@ void TextToolbar::orientation_changed(int mode)
         DocumentUndo::done(_desktop->getDocument(), RC_("Undo", "Text: Change orientation"), INKSCAPE_ICON("draw-text"));
     }
     sp_repr_css_attr_unref (css);
-    onDefocus();
+    close_mode_menus();
 
     _freeze = false;
 }
@@ -895,7 +930,7 @@ void TextToolbar::direction_changed(int mode)
     }
     sp_repr_css_attr_unref(css);
 
-    onDefocus();
+    close_mode_menus();
 
     _freeze = false;
 }
@@ -1558,6 +1593,7 @@ void TextToolbar::_selectionChanged(Selection *selection) // don't bother to upd
             activeButton = 3;
         }
         _alignment_buttons[activeButton]->set_active(true);
+        update_mode_menu_icons();
 
         double height = 0;
         gint line_height_unit = 0;
@@ -1646,6 +1682,7 @@ void TextToolbar::_selectionChanged(Selection *selection) // don't bother to upd
         if (query.writing_mode.computed == SP_CSS_WRITING_MODE_TB_LR) activeButton2 = 2;
 
         _writing_buttons[activeButton2]->set_active(true);
+        update_mode_menu_icons();
 
         // Orientation
         int activeButton3 = 0;
@@ -1654,6 +1691,7 @@ void TextToolbar::_selectionChanged(Selection *selection) // don't bother to upd
         if (query.text_orientation.computed == SP_CSS_TEXT_ORIENTATION_SIDEWAYS) activeButton3 = 2;
 
         _orientation_buttons[activeButton3]->set_active(true);
+        update_mode_menu_icons();
 
         // Disable text orientation for horizontal text...
         for (auto btn : _orientation_buttons) {
@@ -1665,6 +1703,7 @@ void TextToolbar::_selectionChanged(Selection *selection) // don't bother to upd
         if (query.direction.computed == SP_CSS_DIRECTION_LTR) activeButton4 = 0;
         if (query.direction.computed == SP_CSS_DIRECTION_RTL) activeButton4 = 1;
         _direction_buttons[activeButton4]->set_active(true);
+        update_mode_menu_icons();
     }
 
     if constexpr (DEBUG_TEXT) {
