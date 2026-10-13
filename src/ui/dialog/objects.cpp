@@ -625,7 +625,7 @@ Gtk::TreeModel::iterator ObjectWatcher::getChildIter(Node *node) const
         }
     }
     // In layer mode, we will come here for all non-layers
-    return childrows.begin();
+    return childrows.end();
 }
 
 void ObjectWatcher::notifyChildAdded( Node &node, Node &child, Node *prev )
