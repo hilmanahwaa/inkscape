@@ -88,6 +88,7 @@ protected:
     SPDocument* _document = nullptr;
     SPObject* _current_object = nullptr;
     sigc::scoped_connection _resource_changed;
+    sigc::scoped_connection _page_origin_changed;
     OperationBlocker _update;
     Glib::ustring _title;
     Gtk::Widget* _widget = nullptr;
