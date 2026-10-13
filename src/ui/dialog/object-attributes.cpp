@@ -361,7 +361,9 @@ details::AttributesPanel::AttributesPanel()
     _grid.set_indent(MARGIN);
     _widget = &_grid;
     _tracker = std::make_unique<UI::Widget::UnitTracker>(Inkscape::Util::UNIT_TYPE_LINEAR);
-    get_widget<Gtk::Box>(_builder, "size-units").append(*_tracker->create_unit_dropdown());
+    for (auto id : {"location-units", "size-units"}) {
+        get_widget<Gtk::Box>(_builder, id).append(*_tracker->create_unit_dropdown());
+    }
 
     for (auto spin : {&_x, &_y, &_width, &_height}) {
         _tracker->addAdjustment(spin->get_adjustment()->gobj());
