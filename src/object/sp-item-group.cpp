@@ -1113,11 +1113,20 @@ sp_group_perform_patheffect(SPGroup *group, SPGroup *top_group, Inkscape::LivePa
 std::vector<guint32> default_highlights;
 
 /**
+ * Should we choose from the layer default highlight colors, or go with the base SPItem
+ * inheritance/default?
+ */
+bool SPGroup::_should_choose_layer_highlight() const
+{
+    // Parent must not be a layer (root, or similar) and this group must also be a layer
+    return !SP_IS_LAYER(parent) && isLayer() && !default_highlights.empty();
+}
+
+/**
  * Generate a highlight colour if one isn't set and return it.
  */
 Inkscape::Colors::Color SPGroup::highlight_color() const {
-    // Parent must not be a layer (root, or similar) and this group must also be a layer
-    if (!_highlightColor && !SP_IS_LAYER(parent) && this->_layer_mode == SPGroup::LAYER && !default_highlights.empty()) {
+    if (!isHighlightSet() && _should_choose_layer_highlight()) {
         char const * oid = defaultLabel();
         if (oid && *oid) {
             // Color based on the last few bits of the label or object id.
@@ -1147,7 +1156,7 @@ void SPGroup::preserveGroupHighlight()
  */
 void SPGroup::preserveLayerHighlight()
 {
-    if (_layer_mode == SPGroup::LAYER) {
+    if (!isHighlightSet() && _should_choose_layer_highlight()) {
         preserveGroupHighlight();
     }
 }

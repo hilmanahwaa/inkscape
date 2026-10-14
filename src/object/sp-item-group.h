@@ -63,6 +63,7 @@ public:
     std::vector<SPItem*> item_list();
 
 private:
+    bool _should_choose_layer_highlight() const;
     void _updateLayerMode(unsigned int display_key=0);
     bool adding_children = false;
 public:
