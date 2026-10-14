@@ -671,7 +671,6 @@ static double get_accel_factor(Gdk::ModifierType state) {
 
 Gtk::EventSequenceState InkSpinButton::on_drag_begin_value(Gdk::EventSequence* sequence) {
     _value.set_cursor("col-resize");
-    _initial_value = _adjustment->get_value();
     _drag_value->get_point(sequence, _drag_start.x,_drag_start.y);
     return Gtk::EventSequenceState::CLAIMED;
 }
@@ -697,8 +696,12 @@ Gtk::EventSequenceState InkSpinButton::on_drag_update_value(Gdk::EventSequence* 
     if (_drag.started) {
         auto state = _drag_value->get_current_event_state();
         auto distance = _drag.horizontal ? dx - _drag.x : dy - _drag.y;
-        auto value = _initial_value + get_accel_factor(state) * distance * _adjustment->get_step_increment();
+        auto value = _adjustment->get_value() + get_accel_factor(state) * distance * _adjustment->get_step_increment();
         set_new_value(value);
+
+        // Reset our drag point, so the next update will be relative to here
+        _drag.x = dx;
+        _drag.y = dy;
     }
     return Gtk::EventSequenceState::CLAIMED;
 }
