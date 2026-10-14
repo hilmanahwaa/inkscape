@@ -78,8 +78,11 @@ void TextContext::set_paint_style(StyleMap const &map, SPStyle const *style, SPS
     // NOTE: The pattern and gradients applied to tspans are currently not positioned correctly
     // but this bug is left in because it is not trivial to fix and is not possible to make an
     // SVG with the senario using Inkscape at the present time.
+    std::cout << "TextContext::set_paint_style: " << style->fill.getColor().toString() << std::endl;
     if (map.contains(SPAttr::FILL)) {
+        std::cout << "  Map contains SPAttr:FILL" << std::endl;
         if (auto color = _doc.get_paint(style->fill, context_style, get_softmask(style->fill_opacity.as_double()))) {
+            std::cout << "  Set to: " << style->fill.getColor().toString() << std::endl;
             _tx.set_nonstroke(*color);
         }
     }
@@ -279,6 +282,7 @@ void DrawContext::paint_text_layout(Text::Layout const &layout, SPStyle const *c
 
         // This non-scoped memory means the PDF lacks style scope within the Text Block.
         auto style = text_source->style;
+        std::cout << "DrawContext::paint_text_layout: " << style->fill.getColor().toString() << std::endl;
         auto style_map = text_paint_memory.get_changes_and_remember(style);
         tx.set_paint_style(style_map, style, context_style);
 
@@ -376,9 +380,15 @@ void DrawContext::paint_text_decoration(Text::Layout const &layout, SPStyle cons
             if (!style->text_decoration_line.line_through) continue;
         }
 
-        // This non-scoped memory means the PDF lacks style scope within the Text Block.
-        auto style_map = paint_memory.get_changes_and_remember(style);
-        set_paint_style(style_map, style, context_style);
+        SPStyle style_td; // Temporary style for text decoration.
+        style_td.fill.read("red");
+
+        auto style_map = paint_memory.get_changes_and_remember(&style_td);
+        if (style_map.contains(SPAttr::FILL)) {
+            if (auto color = _doc.get_paint(style_td.fill, context_style, get_softmask(1.0))) {
+                _ctx.set_nonstroke(*color);
+            }
+        }
 
         // Find start/end of text decoration
         double y = 0;
