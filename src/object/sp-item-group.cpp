@@ -1113,11 +1113,20 @@ sp_group_perform_patheffect(SPGroup *group, SPGroup *top_group, Inkscape::LivePa
 std::vector<guint32> default_highlights;
 
 /**
+ * Should we choose from the layer default highlight colors, or go with the base SPItem
+ * inheritance/default?
+ */
+bool SPGroup::_should_choose_layer_highlight() const
+{
+    // Parent must not be a layer (root, or similar) and this group must also be a layer
+    return !SP_IS_LAYER(parent) && isLayer() && !default_highlights.empty();
+}
+
+/**
  * Generate a highlight colour if one isn't set and return it.
  */
 Inkscape::Colors::Color SPGroup::highlight_color() const {
-    // Parent must not be a layer (root, or similar) and this group must also be a layer
-    if (!_highlightColor && !SP_IS_LAYER(parent) && this->_layer_mode == SPGroup::LAYER && !default_highlights.empty()) {
+    if (!isHighlightSet() && _should_choose_layer_highlight()) {
         char const * oid = defaultLabel();
         if (oid && *oid) {
             // Color based on the last few bits of the label or object id.
@@ -1125,6 +1134,31 @@ Inkscape::Colors::Color SPGroup::highlight_color() const {
         }
     }
     return SPItem::highlight_color();
+}
+
+/**
+ * Ensure that the current highlight color of the group is set (not defaulted) to its current
+ * color, so that any change to the group (like changing its layer mode, or renaming a layer)
+ * doesn't change the color by changing the default.
+ * @param group The group or layer to preserve the highlight for.
+ */
+void SPGroup::preserveGroupHighlight()
+{
+    if (!isHighlightSet()) {
+        setHighlight(highlight_color());
+    }
+}
+
+/**
+ * Same as preserveGroupHighlight, but only set the highlight if this is a layer, and not any other
+ * type of group.
+ * @param group The group or layer to preserve the highlight for.
+ */
+void SPGroup::preserveLayerHighlight()
+{
+    if (!isHighlightSet() && _should_choose_layer_highlight()) {
+        preserveGroupHighlight();
+    }
 }
 
 void set_default_highlight_colors(std::vector<guint32> colors) {
