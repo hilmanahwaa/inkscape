@@ -180,7 +180,6 @@ private:
     void set_width_chars(int width);
 
     // ---------------- DATA ------------------
-    double _initial_value = 0.0; // Value of adjustment at the start of drag.
     double _drag_full_travel = 300.0; // dragging sensitivity in pixels
     struct DragInfo { double x, y; bool started = false; bool horizontal; } _drag;
     double _scroll_counter = 0; // Counter to control incrementing/decrementing rate
