@@ -64,7 +64,7 @@ struct ColorItem : public Glib::Object
     }
 };
 
-class RecolorArt : public Gtk::Box , public UndoStackObserver
+class RecolorArt : public Gtk::Box
 {
 public:
     RecolorArt();
@@ -75,19 +75,13 @@ public:
     void onResetClicked();
 
 
-    void notifyUndoEvent(Event *log);
-    void notifyRedoEvent(Event *log);
-    void notifyUndoCommitEvent(Event *log);
-    void notifyUndoExpired(Event *log);
-    void notifyClearUndoEvent();
-    void notifyClearRedoEvent();
-
 
 private:
     RecolorArt(Glib::RefPtr<Gtk::Builder> const &builder);
 
     SPDesktop *_desktop = nullptr;
     sigc::scoped_connection _sel_changed_conn;
+    sigc::scoped_connection _sel_modified_conn;
     sigc::scoped_connection _desktop_destroyed_conn;
     Gtk::Box &_color_picker_container;
     Gtk::Notebook &_notebook;
@@ -116,7 +110,7 @@ private:
     void updateFromSelection();
 
     void generateVisualList();
-    void updateVisualListAfterUndoRedo();
+    void selectionModified();
     void layoutColorPicker(std::shared_ptr<Colors::ColorSet> updated_color = nullptr);
     void colorButtons(Gtk::Box *button, Colors::Color color, bool is_original = false);
 
@@ -127,6 +121,7 @@ private:
     void lpChecked(Colors::Color color = Colors::Color(0), bool wheel = false);
     void setUpTypeBox(Gtk::Box *box, Colors::Color const &color);
     void updateColorModel(std::vector<Colors::Color> const &new_colors = {});
+    void updateColorModelItems(std::vector<std::pair<uint32_t,uint32_t>> changes);
     std::pair<Glib::RefPtr<ColorItem>,guint> findColorItemByKey(uint32_t key);
 };
 

@@ -59,11 +59,13 @@ public:
     int getHoverIndex() const { return _color_wheel->getHoverIndex(); }
     void connect_color_hovered(sigc::slot<void()> slot) { _color_wheel->connect_color_hovered(slot); }
     void connect_color_changed(sigc::slot<void()> slot) { _color_wheel->connect_color_changed(slot); }
-    void changeColor(int index, Color color)
+    void changeColor(int index, Color color ,bool fire_signal = true)
     {
-        _color_wheel->changeColor(index, color);
-        _color_wheel_preview->setRgba32(color.toRGBA());
-        _specific_colors->set(color);
+        _color_wheel->changeColor(index, color,fire_signal);
+        if (getActiveIndex() == index) {
+            _color_wheel_preview->setRgba32(color.toRGBA());
+            _specific_colors->set(color);
+        }
     }
 
 private:

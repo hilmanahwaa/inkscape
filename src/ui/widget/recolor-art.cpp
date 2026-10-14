@@ -236,8 +236,8 @@ void RecolorArt::setDesktop(SPDesktop *desktop)
     }
 
     if (_desktop) {
-        _desktop->getDocument()->removeUndoObserver(*this);
         _sel_changed_conn.disconnect();
+        _sel_modified_conn.disconnect();
         _desktop_destroyed_conn.disconnect();
 
         _desktop->setHideSelectionBoxes(false);
@@ -252,7 +252,6 @@ void RecolorArt::setDesktop(SPDesktop *desktop)
     _desktop = desktop;
 
     if (_desktop) {
-        _desktop->getDocument()->addUndoObserver(*this);
         _desktop->setHideSelectionBoxes(true);
 
         _desktop_destroyed_conn = _desktop->connectDestroy([this] (auto) {
@@ -518,6 +517,29 @@ void RecolorArt::updateColorModel(std::vector<Colors::Color> const &new_colors)
     _color_model->splice(0, _color_model->get_n_items(), new_colors_buttons);
 }
 
+void RecolorArt::updateColorModelItems(std::vector<std::pair<uint32_t, uint32_t>> changes)
+{
+    auto guard = _blocker.block();
+    if (changes.size() > _color_model->get_n_items())
+        return;
+    for (auto [key, new_color] : changes) {
+        auto [item, index] = findColorItemByKey(key);
+        if (!item) {
+            continue;
+        }
+        auto color_item = std::dynamic_pointer_cast<ColorItem>(item);
+        if (!color_item) {
+            continue;
+        }
+        Color c(new_color, true);
+        int i = _manager.getColorIndex(key);
+        _color_wheel->changeColor(i, c, false); // false so it doesn't fire change signal and clear redo stack
+        _manager.setSelectedNewColor(key, c);
+        auto new_item = ColorItem::create(color_item->key, color_item->old_color, c);
+        _color_model->splice(index, 1, {new_item});
+    }
+}
+
 /*
  * finding a color model item by key
  */
@@ -578,6 +600,11 @@ void RecolorArt::showForSelection(SPDesktop *desktop)
         updateFromSelection();
     });
 
+    _sel_modified_conn = _desktop->getSelection()->connectModified([this](Inkscape::Selection *selection, guint flags) {
+        if (_live_preview.property_active() && (flags & (SP_OBJECT_STYLE_MODIFIED_FLAG)))
+            selectionModified();
+    });
+
     updateFromSelection();
 }
 
@@ -631,38 +658,16 @@ void RecolorArt::showForObject(SPDesktop *desktop, SPObject *object)
         _color_wheel->setColors(_manager.getColors());
     }
 }
-
-void RecolorArt::updateVisualListAfterUndoRedo() {
-    auto selection = _desktop->getSelection();
-    auto items = selection->items();
-    auto vec = std::vector<SPObject *>(items.begin(), items.end());
-    auto temp = collect_colours(vec);
-    auto new_colors = temp.getColors();
-    _manager.setSelectedNewColor(new_colors);
-    updateColorModel(new_colors);
-    _color_wheel->setColors(new_colors,false); // false so it doesn't fire change signal and clear redo stack
-}
-
-void RecolorArt::notifyUndoEvent(Event *log)
-{
-    if (log->icon_name != INKSCAPE_ICON("object-recolor-art"))
+//update Visual List After SelectionModified from outside widget
+void RecolorArt::selectionModified() {
+   
+    if (_selection_blocker.pending()) {
         return;
-    updateVisualListAfterUndoRedo();
-}
-
-void RecolorArt::notifyRedoEvent(Event *log)
-{
-    if (log->icon_name != INKSCAPE_ICON("object-recolor-art"))
+    }
+    std::vector<std::pair<uint32_t, uint32_t>> changes = _manager.getChangedRows();
+    if (changes.empty())
         return;
-        updateVisualListAfterUndoRedo();
+    updateColorModelItems(changes);
 }
-
-void RecolorArt::notifyUndoCommitEvent(Event *log) {}
-
-void RecolorArt::notifyUndoExpired(Event *log) {}
-
-void RecolorArt::notifyClearUndoEvent() {}
-
-void RecolorArt::notifyClearRedoEvent() {}
 
 } // namespace Inkscape::UI::Widget

@@ -266,7 +266,7 @@ public:
         else
             return -1;
     }
-    bool changeColor(int index, Colors::Color const &color);
+    bool changeColor(int index, Colors::Color const &color, bool fire_signal = true);
     sigc::connection connect_color_hovered(sigc::slot<void ()> slot) { return _signal_color_hovered.connect(std::move(slot)); }
     void toggleHueLock(bool locked){_hue_lock = locked ;}
     bool getHueLock(){return _hue_lock;}

@@ -996,7 +996,7 @@ void MultiMarkerWheel::update_wheel_source()
  * and return true if succeeded
  * used to sync wheel's colors if the color chnaged from the colorlist
  */
-bool MultiMarkerWheel::changeColor(int index, Colors::Color const &color)
+bool MultiMarkerWheel::changeColor(int index, Colors::Color const &color,bool fire_signal)
 {
     if (index < 0 || index >= _values_vector.size()) {
         return false;
@@ -1004,7 +1004,10 @@ bool MultiMarkerWheel::changeColor(int index, Colors::Color const &color)
 
     if (_values_vector[index].set(color, true)) {
         _markers_points[index].reset();
-        color_changed();
+        if (fire_signal)
+            color_changed();
+        else
+            queue_drawing_area_draw();
         return true;
     }
 
