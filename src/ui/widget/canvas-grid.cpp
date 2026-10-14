@@ -577,14 +577,12 @@ static void ruler_snap_new_guide(SPDesktop *desktop, Geom::Point &event_dt, Geom
     // Because the guide snapper only looks in the document for guides to snap to,
     // we don't have to worry about a guide snapping to itself here
     auto const normal_orig = normal;
-    m.guideFreeSnap(event_dt, normal, false, false);
+    auto snapped = m.guideFreeSnap(event_dt, normal, false, false);
 
     // After snapping, both event_dt and normal have been modified accordingly; we'll take the normal (of the
     // curve we snapped to) to set the normal the guide. And rotate it by 90 deg. if needed
-    if (pref_perp) { // Perpendicular snapping to paths is requested by the user, so let's do that
-        if (normal != normal_orig) {
-            normal = Geom::rot90(normal);
-        }
+    if (snapped && pref_perp) { // Perpendicular snapping to paths is requested by the user, so let's do that
+        normal = Geom::rot90(normal);
     }
 
     if (!(pref_tang || pref_perp)) { // if we don't want to snap either perpendicularly or tangentially, then
