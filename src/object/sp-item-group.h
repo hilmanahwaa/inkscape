@@ -94,6 +94,8 @@ public:
     void update_patheffect(bool write) override;
 
     Inkscape::Colors::Color highlight_color() const override;
+    void preserveGroupHighlight();
+    void preserveLayerHighlight();
 
     void removeTransformsRecursively(SPObject const *root) override;
 

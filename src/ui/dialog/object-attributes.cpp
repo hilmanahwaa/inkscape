@@ -1096,9 +1096,8 @@ void details::AttributesPanel::add_object_label() {
         auto new_label = _obj_label.get_text();
         auto current_label = _current_object->label();
         if (new_label.compare(current_label ? current_label : "") != 0) {
-            auto layer = cast<SPGroup>(_current_object);
-            if (layer && layer->layerMode() == SPGroup::LAYER && !layer->isHighlightSet()) {
-                layer->setHighlight(layer->highlight_color());
+            if (auto layer = cast<SPGroup>(_current_object)) {
+                layer->preserveLayerHighlight();
             }
             _current_object->setLabel(new_label.c_str());
             _current_object->requestModified(SP_OBJECT_MODIFIED_FLAG | TAG);

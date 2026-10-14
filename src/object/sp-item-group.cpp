@@ -1127,6 +1127,31 @@ Inkscape::Colors::Color SPGroup::highlight_color() const {
     return SPItem::highlight_color();
 }
 
+/**
+ * Ensure that the current highlight color of the group is set (not defaulted) to its current
+ * color, so that any change to the group (like changing its layer mode, or renaming a layer)
+ * doesn't change the color by changing the default.
+ * @param group The group or layer to preserve the highlight for.
+ */
+void SPGroup::preserveGroupHighlight()
+{
+    if (!isHighlightSet()) {
+        setHighlight(highlight_color());
+    }
+}
+
+/**
+ * Same as preserveGroupHighlight, but only set the highlight if this is a layer, and not any other
+ * type of group.
+ * @param group The group or layer to preserve the highlight for.
+ */
+void SPGroup::preserveLayerHighlight()
+{
+    if (_layer_mode == SPGroup::LAYER) {
+        preserveGroupHighlight();
+    }
+}
+
 void set_default_highlight_colors(std::vector<guint32> colors) {
     std::swap(default_highlights, colors);
 }
