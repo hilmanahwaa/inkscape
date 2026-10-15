@@ -175,6 +175,10 @@ text_remove_from_path()
 {
     SPDesktop *desktop = SP_ACTIVE_DESKTOP;
 
+    if (!desktop) {
+        return;
+    }
+
     Inkscape::Selection *selection = desktop->getSelection();
 
     if (selection->isEmpty()) {
@@ -233,6 +237,10 @@ void
 text_remove_all_kerns()
 {
     SPDesktop *desktop = SP_ACTIVE_DESKTOP;
+
+    if (!desktop) {
+        return;
+    }
 
     Inkscape::Selection *selection = desktop->getSelection();
 
@@ -684,6 +692,10 @@ void
 flowtext_to_text()
 {
     SPDesktop *desktop = SP_ACTIVE_DESKTOP;
+
+    if (!desktop) {
+        return;
+    }
 
     Inkscape::Selection *selection = desktop->getSelection();
 
