@@ -128,6 +128,13 @@ foreach(test_source ${TEST_SOURCES})
     add_dependencies(tests ${testname})
 endforeach()
 
+# Exercises GTK image state without mapping a window.
+add_executable(ui-icon-size-test src/ui-icon-size-test.cpp)
+target_link_libraries(ui-icon-size-test PRIVATE inkscape_base)
+add_test(NAME ui-icon-size-test COMMAND ui-icon-size-test)
+set_tests_properties(ui-icon-size-test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 10)
+add_dependencies(tests ui-icon-size-test)
+
 ### CLI rendering tests and LPE
 add_subdirectory(cli_tests)
 add_subdirectory(rendering_tests)
