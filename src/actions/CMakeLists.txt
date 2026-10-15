@@ -64,6 +64,8 @@ target_sources(inkscape_base PRIVATE
   actions-selection.cpp
   actions-text.h
   actions-text.cpp
+  actions-text-attributes.h
+  actions-text-attributes.cpp
   actions-tools.h
   actions-tools.cpp
   actions-tutorial.h
