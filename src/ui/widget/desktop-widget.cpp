@@ -632,29 +632,30 @@ void SPDesktopWidget::layoutWidgets()
     bool widescreen = (height > 0 && width/height > 1.65);
     widescreen = prefs->getBool(pref_root + "interface_mode", widescreen);
 
-    // Unlink command toolbar.
-    command_toolbar->reference(); // So toolbox is not deleted.
     auto parent = command_toolbar->get_parent();
-    parent->remove(*command_toolbar);
-
-    // Link command toolbar back.
-    auto orientation_c = GTK_ORIENTATION_HORIZONTAL;
-    if (!widescreen) {
-        _top_toolbars->attach(*command_toolbar, 0, 0); // Always first in Grid
-        command_toolbar->set_hexpand(true);
-        orientation_c = GTK_ORIENTATION_HORIZONTAL;
-    } else {
-        _hbox->add(*command_toolbar);
-        orientation_c = GTK_ORIENTATION_VERTICAL;
-        command_toolbar->set_hexpand(false);
+    Gtk::Container *target = widescreen ? static_cast<Gtk::Container *>(_hbox) : _top_toolbars;
+    // Removing a toolbar also disconnects its inherited actions and invalidates
+    // its style. Preserve the widget hierarchy when only the window size or
+    // state changed, and the requested toolbar position is still the same.
+    if (parent != target) {
+        command_toolbar->reference(); // So toolbox is not deleted.
+        if (parent)
+            parent->remove(*command_toolbar);
+        if (widescreen) {
+            _hbox->add(*command_toolbar);
+        } else {
+            _top_toolbars->attach(*command_toolbar, 0, 0); // Always first in Grid
+        }
+        command_toolbar->unreference();
     }
+    command_toolbar->set_hexpand(!widescreen);
+    auto orientation_c = widescreen ? GTK_ORIENTATION_VERTICAL : GTK_ORIENTATION_HORIZONTAL;
     // Toolbar is actually child:
     command_toolbar->foreach ([=, this](Gtk::Widget &widget) {
         if (auto toolbar = dynamic_cast<Gtk::Box *>(&widget)) {
             gtk_orientable_set_orientation(GTK_ORIENTABLE(toolbar->gobj()), orientation_c); // Missing in C++interface!
         }
     });
-    command_toolbar->unreference();
 
     // Temporary for Gtk3: Gtk toolbar resets icon sizes, so reapply them.
     // TODO: remove this call in Gtk4 after Gtk::Toolbar is eliminated.
