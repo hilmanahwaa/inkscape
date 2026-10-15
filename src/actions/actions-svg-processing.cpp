@@ -32,6 +32,7 @@
 #include "svg/svg-box.h"
 #include "svg/svg.h"
 #include "xml/attribute-record.h"
+#include "xml/href-attribute-helper.h"
 #include "xml/node.h"
 
 /*
@@ -201,6 +202,168 @@ static void remove_marker_auto_start_reverse(Inkscape::XML::Node *repr,
                 sp_repr_css_set(repr, css, "style");
 
             } // Uses auto-start-reverse
+        }
+    }
+}
+
+/**
+ *  \return    None
+ *
+ *  \brief     Replace indirect <use> references inside <clipPath> elements with plain shapes.
+ *
+ *  \param repr  The current element to check.
+ */
+static void correct_clippath_use(Inkscape::XML::Node *repr)
+{
+    static char const *const shape_names[] = {
+        "svg:path", "svg:rect", "svg:circle", "svg:ellipse",
+        "svg:line", "svg:polyline", "svg:polygon", "svg:text"
+    };
+
+    auto is_shape = [](char const *name) {
+        return std::any_of(std::begin(shape_names), std::end(shape_names),
+                           [name](char const *shape) { return std::strcmp(name, shape) == 0; });
+    };
+
+    // Pass 1: index all elements by id and collect every <clipPath>.
+    std::map<std::string, Inkscape::XML::Node *> nodes_by_id;
+    std::vector<Inkscape::XML::Node *> clip_paths;
+    std::vector<Inkscape::XML::Node *> to_visit{repr};
+
+    while (!to_visit.empty()) {
+        auto *node = to_visit.back();
+        to_visit.pop_back();
+
+        if (node->type() != Inkscape::XML::NodeType::ELEMENT_NODE) {
+            continue;
+        }
+        if (auto id = node->attribute("id")) {
+            nodes_by_id[id] = node;
+        }
+        if (std::strcmp(node->name(), "svg:clipPath") == 0) {
+            clip_paths.push_back(node);
+        }
+        for (auto child = node->firstChild(); child; child = child->next()) {
+            to_visit.push_back(child);
+        }
+    }
+
+    // Returns the element referenced by a <use>, or nullptr if it can't be resolved.
+    auto resolve_use = [&](Inkscape::XML::Node *use) -> Inkscape::XML::Node * {
+        auto href = Inkscape::getHrefAttribute(*use).second;
+        if (!href || href[0] != '#') {
+            return nullptr;
+        }
+        auto it = nodes_by_id.find(href + 1);
+        return it == nodes_by_id.end() ? nullptr : it->second;
+    };
+
+    // A node to be flattened
+    struct Frame
+    {
+        Inkscape::XML::Node *node;
+        Geom::Affine transform;
+        std::size_t parent;
+    };
+    constexpr std::size_t NO_PARENT = std::numeric_limits<std::size_t>::max();
+
+    // Pass 2: flatten every <use> whose target is not a shape.
+    for (auto *clip_path : clip_paths) {
+        // Collect first: the children of the <clipPath> are modified below.
+        std::vector<Inkscape::XML::Node *> uses;
+        for (auto child = clip_path->firstChild(); child; child = child->next()) {
+            if (child->type() == Inkscape::XML::NodeType::ELEMENT_NODE &&
+                std::strcmp(child->name(), "svg:use") == 0) {
+                uses.push_back(child);
+            }
+        }
+
+        for (auto *use : uses) {
+            auto *target = resolve_use(use);
+            if (!target || is_shape(target->name())) {
+                continue; // already valid, or broken: leave untouched
+            }
+
+            auto *before = use->prev();
+            auto *last = before; // copies are inserted after this node, in document order
+
+            std::vector<Frame> frames{{use, Geom::identity(), NO_PARENT}};
+            std::vector<std::size_t> stack{0};
+
+            while (!stack.empty()) {
+                std::size_t const index = stack.back();
+                stack.pop_back();
+
+                // Copy the values: pushing to `frames` below may invalidate references.
+                auto *node = frames[index].node;
+                auto transform = frames[index].transform;
+
+                if (node->type() != Inkscape::XML::NodeType::ELEMENT_NODE) {
+                    continue;
+                }
+
+                // Skip reference cycles (a node that is its own ancestor).
+                bool is_cycle = false;
+                for (auto i = frames[index].parent; i != NO_PARENT; i = frames[i].parent) {
+                    if (frames[i].node == node) {
+                        is_cycle = true;
+                        break;
+                    }
+                }
+                if (is_cycle) {
+                    continue;
+                }
+
+                // The node's own transform is applied first, then the outer one.
+                if (auto value = node->attribute("transform")) {
+                    Geom::Affine own;
+                    if (sp_svg_transform_read(value, &own)) {
+                        transform = own * transform;
+                    }
+                }
+
+                char const *name = node->name();
+                if (std::strcmp(name, "svg:g") == 0) {
+                    // Push children, then reverse so they are popped in document order.
+                    auto const first = stack.size();
+                    for (auto child = node->firstChild(); child; child = child->next()) {
+                        frames.push_back({child, transform, index});
+                        stack.push_back(frames.size() - 1);
+                    }
+                    std::reverse(stack.begin() + first, stack.end());
+                } else if (std::strcmp(name, "svg:use") == 0) {
+                    if (auto *referenced = resolve_use(node)) {
+                        double x = 0.0;
+                        double y = 0.0;
+                        if (auto value = node->attribute("x")) {
+                            x = g_ascii_strtod(value, nullptr);
+                        }
+                        if (auto value = node->attribute("y")) {
+                            y = g_ascii_strtod(value, nullptr);
+                        }
+                        // x and y translate the referenced content before the <use>'s transform.
+                        frames.push_back({referenced, Geom::Translate(x, y) * transform, index});
+                        stack.push_back(frames.size() - 1);
+                    }
+                } else if (is_shape(name)) {
+                    auto *copy = node->duplicate(clip_path->document());
+                    copy->removeAttribute("id"); // avoid duplicate ids
+                    if (transform.isIdentity()) {
+                        copy->removeAttribute("transform");
+                    } else {
+                        copy->setAttribute("transform", sp_svg_transform_write(transform));
+                    }
+                    clip_path->addChild(copy, last);
+                    last = copy;
+                    Inkscape::GC::release(copy);
+                }
+                // Other things aren't supported in SVG format.
+            }
+
+            // Don't leave an empty <clipPath> (which would clip everything) if nothing was copied.
+            if (last != before) {
+                sp_repr_unparent(use);
+            }
         }
     }
 }
@@ -702,6 +865,7 @@ std::vector<std::vector<Glib::ustring>> doc_svg_processing_actions =
     {"doc.set-inkscape-version",         N_("Set Inkscape Version"),         SECTION, N_("Add the Inkscape version to the document") },
     {"doc.prune-inkscape-namespaces",    N_("Prune Inkscape Namespaces"),    SECTION, N_("Remove any Inkscape-specific SVG data") },
     {"doc.prune-proprietary-namespaces", N_("Prune Proprietary Namespaces"), SECTION, N_("Remove any known proprietary SVG data") },
+    {"doc.correct-clippath-use",         N_("Correct Clip Path Use"),        SECTION, N_("Replace <clippath>'s <use>'s <href>s to groups with plain shapes") }, // https://gitlab.com/inkscape/inkscape/-/work_items/1391
 
     {"doc.reverse-auto-start-markers",   N_("Reverse Auto Start Markers"),   SECTION, N_("Remove auto start positions from markers") },
     {"doc.remove-all-transforms",        N_("Try to Remove All Transforms"), SECTION, N_("Attempt to remove all transforms from all shapes") },
@@ -720,6 +884,7 @@ std::vector<std::vector<Glib::ustring>> doc_svg_processing_actions =
     {"doc.insert-path-data",             N_("Annotate all Shape Paths"),     SECTION, N_("Annotate every non-path shape with their equivalent path string (not kept up to date)") },
 
     {"doc.vacuum-defs",                  N_("Clean up Document"),            SECTION, N_("Remove unused definitions (gradients, etc.)") },
+
     // clang-format on
 };
 
@@ -742,6 +907,7 @@ void add_actions_processing(SPDocument* doc)
     });
     group->add_action("prune-inkscape-namespaces",    [doc]() { prune_inkscape_from_node(doc->getReprRoot()); });
     group->add_action("prune-proprietary-namespaces", [doc]() { prune_proprietary_from_node(doc->getReprRoot()); });
+    group->add_action("correct-clippath-use", [doc]() { correct_clippath_use(doc->getReprRoot()); });
     group->add_action("reverse-auto-start-markers",   [doc]() {
         // Do marker start for efficiency reasons
         remove_marker_auto_start_reverse(doc->getReprRoot(), doc->getDefs()->getRepr(), "marker-start");
