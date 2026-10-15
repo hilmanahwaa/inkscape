@@ -1354,19 +1354,18 @@ objects_query_textdecoration (const std::vector<SPItem*> &objects, SPStyle *styl
 
         texts++;
 
-        if (style_res->text_decoration_line.set && !style_res->text_decoration_line.equals(style->text_decoration_line)) {
-            different = true;  // different line positions
+        if (style->text_decoration_line.set) {
+            if (!style->text_decoration_line.equals(style->text_decoration_line)) {
+                different = true;
+            }
+            style_res->text_decoration_line = style->text_decoration_line;
+            style_res->text_decoration_line.set = true;
         }
-
-        style_res->text_decoration_line = style->text_decoration_line;
-        style_res->text_decoration_line.set = true;
     }
 
     if (texts == 0 || !style_res->text_decoration_line.set) {
         return QUERY_STYLE_NOTHING;
-    }
-
-    if (texts > 1) {
+    } else if (texts > 1) {
         if (different) {
             return QUERY_STYLE_MULTIPLE_DIFFERENT;
         } else {

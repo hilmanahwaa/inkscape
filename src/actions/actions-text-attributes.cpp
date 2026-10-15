@@ -46,7 +46,7 @@ std::vector<Glib::ustring> text_decoration_line_values
  * Eventually to be tied to an App level action for use from command line (requires validating string).
  * Setting style needs to be removed from SPDesktop.
  */
-void
+static void
 text_decoration_set_css(InkscapeApplication *app, Glib::ustring attribute, Glib::ustring value)
 {
     auto desktop = app->get_active_desktop();
@@ -58,7 +58,7 @@ text_decoration_set_css(InkscapeApplication *app, Glib::ustring attribute, Glib:
     if (!value.empty()) {
         sp_repr_css_set_property (css, attribute.c_str(), value.c_str());
     } else {
-        sp_repr_css_unset_property (css, attribute.c_str());
+        sp_repr_css_set_property (css, attribute.c_str(), "none");
     }
 
     sp_desktop_set_style(desktop, css, true, false);
@@ -75,13 +75,13 @@ text_decoration_line_set(InkscapeWindow *win, SPStyle* query)
         auto action = win->lookup_action(action_name);
         if (!action) {
             show_output(action_name + ": action missing!");
-            return;
+            continue;
         }
 
         auto saction = std::dynamic_pointer_cast<Gio::SimpleAction>(action);
         if (!saction) {
             show_output(action_name + ": action not SimpleAction!");
-            return;
+            continue;
         }
 
         if (value == "underline")    saction->change_state(query->text_decoration_line.underline);
@@ -103,13 +103,15 @@ text_decoration_line(InkscapeWindow *win, const int& position)
         auto action = win->lookup_action(action_name);
         if (!action) {
             show_output(action_name + ": action missing!");
-            return;
+            ++pos;
+            continue;
         }
 
         auto saction = std::dynamic_pointer_cast<Gio::SimpleAction>(action);
         if (!saction) {
             show_output(action_name + ": action not SimpleAction!");
-            return;
+            ++pos;
+            continue;
         }
 
         bool state = false;
@@ -127,6 +129,10 @@ text_decoration_line(InkscapeWindow *win, const int& position)
         ++pos;
     }
 
+    if (!out.empty()) {
+        out.erase(--out.end());
+    }
+
     auto app = InkscapeApplication::instance();
     text_decoration_set_css(app, "text-decoration-line", out);
 }
@@ -134,9 +140,9 @@ text_decoration_line(InkscapeWindow *win, const int& position)
 std::vector<std::vector<Glib::ustring>> raw_data_text_attributes =
 {
     // clang-format off
-    {"win.text-decoration-line-underline",             N_("Text Underline"),             SECTION, N_("Toggle text underline")   },
-    {"win.text-decoration-line-line-through",          N_("Text Line-Through"),          SECTION, N_("Toggle text line-through")},
-    {"win.text-decoration-line-overline",              N_("Text Overline"),              SECTION, N_("Toggle text overline")    },
+    {"win.text-decoration-line-underline",             N_("Text Underline"),             SECTION, N_("Toggle text underline")    },
+    {"win.text-decoration-line-line-through",          N_("Text Strikethrough"),         SECTION, N_("Toggle text strikethrough")},
+    {"win.text-decoration-line-overline",              N_("Text Overline"),              SECTION, N_("Toggle text overline")     },
     // clang-format on
 };
 
