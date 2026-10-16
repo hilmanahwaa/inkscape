@@ -93,46 +93,6 @@ void recursively_set_properties(SPObject *object, SPCSSAttr *css, bool unset_des
     sp_repr_css_attr_unref(css_unset);
 }
 
-
-// TODO: possibly share with font-selector by moving most code to font-lister (passing family name)
-void sp_text_toolbox_select_cb(Gtk::Entry const &entry)
-{
-    auto const family = entry.get_buffer()->get_text();
-    // std::cout << "text_toolbox_missing_font_cb: selecting: " << family << std::endl;
-
-    // Get all items with matching font-family set (not inherited!).
-    std::vector<SPItem *> selectList;
-
-    SPDesktop *desktop = SP_ACTIVE_DESKTOP;
-    SPDocument *document = desktop->getDocument();
-    for (auto item : get_all_items(document->getRoot(), desktop, false, false, true) | std::views::reverse) {
-        auto style = item->style;
-        if (!style) {
-            continue;
-        }
-
-        Glib::ustring family_style;
-        if (style->font_family.set) {
-            family_style = style->font_family.value();
-            // std::cout << " family style from font_family: " << family_style << std::endl;
-        } else if (style->font_specification.set) {
-            family_style = style->font_specification.value();
-            // std::cout << " family style from font_spec: " << family_style << std::endl;
-        }
-
-        if (family_style.compare(family) == 0) {
-            // std::cout << "   found: " << item->getId() << std::endl;
-            selectList.push_back(item);
-        }
-    }
-
-    // Update selection
-    auto selection = desktop->getSelection();
-    selection->clear();
-    // std::cout << "   list length: " << selectList.size() << std::endl;
-    selection->setList(selectList);
-}
-
 } // namespace
 
 TextToolbar::TextToolbar()
@@ -143,6 +103,7 @@ TextToolbar::TextToolbar(Glib::RefPtr<Gtk::Builder> const &builder)
     : Toolbar{get_widget<Gtk::Box>(builder, "text-toolbar")}
     , _tracker{std::make_unique<UnitTracker>(Util::UNIT_TYPE_LINEAR)}
     , _font_collections_list{get_widget<Gtk::ListBox>(builder, "_font_collections_list")}
+    , _font_collections_popover{get_widget<Gtk::Popover>(builder, "font_collections_popover")}
     , _reset_button{get_widget<Gtk::Button>(builder, "reset_btn")}
     , _line_height_item{get_derived_widget<UI::Widget::SpinButton>(builder, "_line_height_item")}
     , _superscript_btn{get_widget<Gtk::ToggleButton>(builder, "_superscript_btn")}
@@ -155,6 +116,18 @@ TextToolbar::TextToolbar(Glib::RefPtr<Gtk::Builder> const &builder)
     , _font_size_item{get_widget<UI::Widget::FontSizeSelector>(builder, "font_size")}
 {
     auto prefs = Preferences::get();
+
+    // Configure mode buttons
+    int btn_index = 0;
+    for (auto &item : children(get_widget<Gtk::Box>(builder, "mode_buttons_box"))) {
+        auto &btn = dynamic_cast<Gtk::ToggleButton &>(item);
+        _mode_buttons.push_back(&btn);
+        btn.signal_clicked().connect(sigc::bind(sigc::mem_fun(*this, &TextToolbar::mode_changed), btn_index++));
+    }
+
+    // Shape in object and text on path are both one mode here
+    auto mode_one = Preferences::get()->getBool("/tools/text/text_on_path", false);
+    _mode_buttons[mode_one ? 1 : 0]->set_active();
 
     // Line height unit tracker.
     auto const &unit_table = Util::UnitTable::get();
@@ -208,11 +181,6 @@ TextToolbar::TextToolbar(Glib::RefPtr<Gtk::Builder> const &builder)
 
     auto const fontlister = FontLister::get_instance();
 
-    font_count_changed_connection = fontlister->connectUpdate([this] {
-        auto const [all_fonts, _] = FontLister::get_instance()->get_font_count_label();
-        _reset_button.set_sensitive(!all_fonts);
-    });
-
     // Font family
     _font_family_item = Gtk::make_managed<UI::Widget::ComboBoxEntryToolItem>(
         "TextFontFamilyAction",
@@ -225,11 +193,20 @@ TextToolbar::TextToolbar(Glib::RefPtr<Gtk::Builder> const &builder)
         &font_lister_separator_func
     );
 
+    _font_collections_popover.set_parent(*_font_family_item);
+    font_count_changed_connection = fontlister->connectUpdate([this] {
+        auto const [all_fonts, _] = FontLister::get_instance()->get_font_count_label();
+        _reset_button.set_sensitive(!all_fonts);
+    });
+
     _font_family_item->popup_enable(); // Enable entry completion
-    _font_family_item->set_info(_("Select all text with this font-family")); // Show selection icon
-    _font_family_item->set_info_cb(&sp_text_toolbox_select_cb);
-    _font_family_item->set_warning(_("Font not found on system")); // Show icon w/ tooltip if font missing
-    _font_family_item->set_warning_cb(&sp_text_toolbox_select_cb);
+    _font_family_item->set_info(INKSCAPE_ICON("font_collections"), _("Select Font Collections"), [this](const Gtk::Entry &entry) {
+        UI::popup_at(_font_collections_popover, *_font_family_item);
+    });
+    _font_family_item->set_warning(_("Font not found on system"), [this](const Gtk::Entry &entry) {
+        // We still need access to the font collections when warning about fonts.
+        UI::popup_at(_font_collections_popover, *_font_family_item);
+    });
     _font_family_item->focus_on_click(false);
     _font_family_item->connectChanged([this] { fontfamily_value_changed(); });
     _font_family_item->setDefocusTarget(this);
@@ -276,9 +253,11 @@ TextToolbar::TextToolbar(Glib::RefPtr<Gtk::Builder> const &builder)
     // Font collections signals.
     auto const font_collections = FontCollections::get();
 
-    get_widget<Gtk::Popover>(builder, "font_collections_popover")
-        .signal_show()
-        .connect([this] { display_font_collections(); }, false);
+    _font_collections_popover.signal_show().connect([this] {
+        auto const [all_fonts, _] = FontLister::get_instance()->get_font_count_label();
+        _reset_button.set_sensitive(!all_fonts);
+        display_font_collections();
+    }, false);
 
     // This signal will keep both the Text and Font dialog and
     // TextToolbar popovers in sync with each other.
@@ -332,6 +311,12 @@ void TextToolbar::setDesktop(SPDesktop *desktop)
         _cursor_numbers = 0;
         _selectionChanged(sel);
     }
+}
+
+void TextToolbar::mode_changed(int mode)
+{
+    Preferences::get()->setBool("/tools/text/text_on_path", mode == 1);
+    Preferences::get()->setBool("/tools/text/text_in_shape", mode == 1);
 }
 
 void TextToolbar::setup_derived_spin_button(UI::Widget::SpinButton &btn, Glib::ustring const &name,

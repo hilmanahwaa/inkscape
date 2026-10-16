@@ -313,6 +313,10 @@
               <attribute name="action">win.select-same-object-type</attribute>
               <attribute name="icon">edit-select-same-object-type</attribute>
             </item>
+            <item>
+              <attribute name="label" translatable="yes">_Text Font Family</attribute>
+              <attribute name="action">app.text-select-by-font</attribute>
+            </item>
           </section>
         </submenu>
         <item>

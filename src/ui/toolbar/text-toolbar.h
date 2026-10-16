@@ -36,6 +36,7 @@
 namespace Gtk {
 class Builder;
 class Button;
+class Popover;
 class ListBox;
 class ToggleButton;
 } // namespace Gtk
@@ -71,17 +72,21 @@ public:
 private:
     TextToolbar(Glib::RefPtr<Gtk::Builder> const &builder);
 
+    void mode_changed(int mode);
+
     using ValueChangedMemFun = void (TextToolbar::*)();
     using ModeChangedMemFun = void (TextToolbar::*)(int);
 
     std::unique_ptr<UI::Widget::UnitTracker> _tracker;
 
+    std::vector<Gtk::ToggleButton *> _mode_buttons;
     std::vector<Gtk::ToggleButton *> _alignment_buttons;
     std::vector<Gtk::ToggleButton *> _writing_buttons;
     std::vector<Gtk::ToggleButton *> _orientation_buttons;
     std::vector<Gtk::ToggleButton *> _direction_buttons;
 
     Gtk::ListBox &_font_collections_list;
+    Gtk::Popover &_font_collections_popover;
     Gtk::Button &_reset_button;
 
     UI::Widget::ComboBoxEntryToolItem *_font_family_item;

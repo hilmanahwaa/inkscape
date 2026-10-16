@@ -62,10 +62,8 @@ public:
     void popup_disable();
     void focus_on_click(bool focus_on_click);
 
-    void set_info      (Glib::ustring info);
-    void set_info_cb   (InfoCallback info_cb);
-    void set_warning   (Glib::ustring warning_cb);
-    void set_warning_cb(InfoCallback warning);
+    void set_info      (std::string icon, Glib::ustring info, InfoCallback info_cb);
+    void set_warning   (Glib::ustring warning_cb, InfoCallback warning);
     void set_tooltip   (Glib::ustring const &tooltip);
 
     // Accessor methods
@@ -97,6 +95,7 @@ private:
     int                 _active = -1; // Index of active menu item (-1 if not in list).
     Glib::ustring       _text; // Text of active menu item or entry box.
     Glib::ustring       _info;       // Text for tooltip info about entry.
+    std::string         _info_icon;
     InfoCallback        _info_cb; // Callback for clicking info icon.
     sigc::scoped_connection     _info_cb_id;
     bool                _info_cb_blocked = false;

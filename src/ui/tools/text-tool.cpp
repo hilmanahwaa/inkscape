@@ -362,6 +362,20 @@ static void hex_to_printable_utf8_buf(char const *const ehex, char *utf8)
     utf8[len] = '\0';
 }
 
+/**
+ * Return the selected style from either the SPText itself or the selected text inside one.
+ */
+SPStyle const *TextTool::getSelectedStyle() const
+{
+    if (text) {
+        if (text_sel_start != text_sel_end) {
+            return sp_te_style_at_position(text, std::min(text_sel_start, text_sel_end));
+        }
+        return text->style;
+    }
+    return nullptr;
+}
+
 void TextTool::_showCurrUnichar()
 {
     if (!uni.empty()) {

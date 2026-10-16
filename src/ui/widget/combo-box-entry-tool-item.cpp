@@ -183,7 +183,7 @@ bool ComboBoxEntryToolItem::set_active_text(Glib::ustring text, int row)
         }
 
         if (!set && !_info.empty()) {
-            _entry->set_icon_from_icon_name(INKSCAPE_ICON("edit-select-all"), Gtk::Entry::IconPosition::SECONDARY);
+            _entry->set_icon_from_icon_name(_info_icon, Gtk::Entry::IconPosition::SECONDARY);
             _entry->set_icon_tooltip_text(_info, Gtk::Entry::IconPosition::SECONDARY);
 
             if (_info_cb) {
@@ -278,34 +278,26 @@ void ComboBoxEntryToolItem::set_tooltip(Glib::ustring const &tooltip)
     }
 }
 
-void ComboBoxEntryToolItem::set_info(Glib::ustring info)
+void ComboBoxEntryToolItem::set_info(std::string icon, Glib::ustring info, InfoCallback info_cb)
 {
     _info = std::move(info);
+    _info_icon = std::move(icon);
+    _info_cb = info_cb;
 
-    // Widget may not have been created....
     if (_entry) {
         _entry->set_icon_tooltip_text(_info, Gtk::Entry::IconPosition::SECONDARY);
+        _entry->set_icon_from_icon_name(_info_icon, Gtk::Entry::IconPosition::SECONDARY);
     }
 }
 
-void ComboBoxEntryToolItem::set_info_cb(InfoCallback info_cb)
-{
-    _info_cb = info_cb;
-}
-
-void ComboBoxEntryToolItem::set_warning(Glib::ustring warning)
+void ComboBoxEntryToolItem::set_warning(Glib::ustring warning, InfoCallback warning_cb)
 {
     _warning = std::move(warning);
+    _warning_cb = warning_cb;
 
-    // Widget may not have been created....
     if (_entry) {
         _entry->set_icon_tooltip_text(_warning, Gtk::Entry::IconPosition::SECONDARY);
     }
-}
-
-void ComboBoxEntryToolItem::set_warning_cb(InfoCallback warning_cb)
-{
-    _warning_cb = warning_cb;
 }
 
 // Internal ---------------------------------------------------
