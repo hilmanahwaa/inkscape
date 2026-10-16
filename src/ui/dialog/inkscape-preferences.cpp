@@ -1208,6 +1208,7 @@ void InkscapePreferences::initPageTools()
 
     //Connector
     this->AddSelcueCheckbox(_page_connector, "/tools/connector", true);
+    this->AddNewObjectsStyle(_page_connector, "/tools/connector", "path");
     _page_connector.add_line(false, "", _connector_ignore_text, "",
             _("If on, connector attachment points will not be shown for text objects"));
 

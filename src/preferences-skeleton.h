@@ -135,7 +135,7 @@ static char const preferences_skeleton[] =
     <eventcontext id="zoom" selcue="1" gradientdrag="0"/>
     <eventcontext id="dropper" selcue="1" gradientdrag="1" pick="1" setalpha="1"/>
     <eventcontext id="select" selcue="1" gradientdrag="0" changelayer="1" changepage="1" />
-    <eventcontext id="connector" style="fill:none;fill-rule:evenodd;stroke:black;stroke-opacity:1;stroke-linejoin:miter;stroke-width:1px;stroke-linecap:butt;" selcue="1"/>
+    <eventcontext id="connector" style="fill:none;fill-rule:evenodd;stroke:black;stroke-opacity:1;stroke-linejoin:miter;stroke-width:1px;stroke-linecap:butt;" selcue="1" usecurrent="path"/>
     <eventcontext id="paintbucket" style="fill:#a0a0a0;stroke:none;" usecurrent="1"/>
     <group
        id="geometric"
