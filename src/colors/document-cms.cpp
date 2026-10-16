@@ -19,6 +19,7 @@
 #include "object/color-profile.h"
 #include "object/sp-defs.h"
 #include "object/sp-root.h"
+#include "preferences.h"
 
 namespace Inkscape::Colors {
 
@@ -108,9 +109,17 @@ bool ColorProfileLink::updateSpace()
 DocumentCMS::DocumentCMS(SPDocument *document)
     : _document(document)
 {
-    if (document)
+    if (document) {
         _resource_connection =
             _document->connectResourcesChanged("iccprofile", sigc::mem_fun(*this, &DocumentCMS::refreshResources));
+
+        // Reset the document_space cache when anythhing in the SPRoot style changes
+        _document_space_watcher = document->getRoot()->connectModified([this](SPObject *obj, unsigned flags) {
+            if (flags & SP_OBJECT_STYLE_MODIFIED_FLAG && flags & SP_OBJECT_MODIFIED_FLAG && is<SPRoot>(obj)) {
+                _document_space.reset();
+            }
+        });
+    }
 }
 
 DocumentCMS::~DocumentCMS()
@@ -197,6 +206,9 @@ void DocumentCMS::refreshResources()
     if (changed) {
         _changed_signal.emit();
     }
+
+    // 4. Invalidate caches for map and document_profile
+    invalidateCaches();
 }
 
 /**
@@ -232,8 +244,10 @@ void DocumentCMS::removeProfile(std::shared_ptr<Space::CMS> space)
 {
     auto result = std::find_if(_spaces.begin(), _spaces.end(), [space](const auto &it) { return it.second == space; });
 
-    if (result != _spaces.end())
+    if (result != _spaces.end()) {
         _spaces.erase(result);
+    }
+    invalidateCaches();
 }
 
 /**
@@ -269,6 +283,19 @@ std::pair<std::string, bool> DocumentCMS::checkProfileName(Colors::CMS::Profile 
         }
     }
     return std::make_pair(std::move(new_name), (bool)getSpace(new_name));
+}
+
+/**
+ * Ensure that the given color space is available in the current document.
+ */
+std::shared_ptr<Inkscape::Colors::Space::AnySpace> DocumentCMS::ensureColorSpaceIsInstalled(std::shared_ptr<Inkscape::Colors::Space::AnySpace> const &space)
+{
+    // Only cms profiles need to be made available
+    if (auto cms = std::dynamic_pointer_cast<Space::CMS>(space)) {
+        auto new_name = attachProfileToDoc(*cms->getProfile(), ColorProfileStorage::HREF_DATA, Colors::RenderingIntent::AUTO);
+        return findSvgColorSpace(new_name);
+    }
+    return space;
 }
 
 /**
@@ -322,6 +349,21 @@ std::shared_ptr<Space::CMS> DocumentCMS::getSpace(std::string const &name) const
     auto it = _spaces.find(name);
     if (it != _spaces.end())
         return it->second;
+    return nullptr;
+}
+
+/**
+ * Get the specific color space using a unique id int.
+ *
+ * @arg id - The unique id of the color space from space->getId()
+ */
+std::shared_ptr<Space::CMS> DocumentCMS::getSpace(int id) const
+{
+    for (auto &link : _links) {
+        if (link->space && link->space->getId() == id) {
+            return link->space;
+        }
+    }
     return nullptr;
 }
 
@@ -401,6 +443,41 @@ std::vector<ColorProfile *> DocumentCMS::getObjects() const
         }
     }
     return ret;
+}
+
+std::shared_ptr<Space::AnySpace> DocumentCMS::getDocumentColorSpace() const
+{
+    if (!_document_space) {
+        static auto rgb = Manager::get().find(Space::Type::RGB);
+        auto space = _document->getRoot()->getColorSpace();
+        _document_space = space ? space : rgb;
+    }
+    return _document_space;
+}
+
+bool DocumentCMS::setDocumentColorSpace(std::shared_ptr<Space::AnySpace> const &space)
+{
+    return _document->getRoot()->setColorSpace(space);
+}
+
+std::shared_ptr<Space::AnySpace> DocumentCMS::mapToStorageFormat(std::shared_ptr<Space::AnySpace> const &input) const
+{
+    static auto prefs = Preferences::get();
+
+    // Create a cache for this DocumentCMS which can be invalidated 
+    auto &found_iter = _storage_map_cache[input->getId()];
+    if (not found_iter) {
+        auto mapped = prefs->getString(input->getPrefsPath() + "storageMap", "");
+        auto output = Manager::get().find(mapped);
+        found_iter = output ? output : getDocumentColorSpace();
+    }
+    return found_iter;
+}
+
+void DocumentCMS::invalidateCaches()
+{
+    _storage_map_cache.clear();
+    _document_space.reset();
 }
 
 } // namespace Inkscape::Colors

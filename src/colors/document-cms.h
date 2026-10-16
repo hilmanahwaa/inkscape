@@ -64,6 +64,7 @@ public:
     }
 
     std::pair<std::string, bool> checkProfileName(Colors::CMS::Profile const &profile, RenderingIntent intent, std::optional<std::string> name = {}) const;
+    std::shared_ptr<Inkscape::Colors::Space::AnySpace> ensureColorSpaceIsInstalled(std::shared_ptr<Inkscape::Colors::Space::AnySpace> const &space);
     std::optional<std::string> attachProfileToDoc(std::string const &lookup, ColorProfileStorage storage,
                                                   RenderingIntent intent);
     std::string attachProfileToDoc(Colors::CMS::Profile const &profile, ColorProfileStorage storage,
@@ -71,6 +72,7 @@ public:
     void setRenderingIntent(std::string const &name, RenderingIntent intent);
 
     std::shared_ptr<Space::CMS> getSpace(std::string const &name) const;
+    std::shared_ptr<Space::CMS> getSpace(int id) const;
 
     ColorProfile *getColorProfileForSpace(std::string const &name) const;
     ColorProfile *getColorProfileForSpace(std::shared_ptr<Space::CMS> space) const;
@@ -79,8 +81,13 @@ public:
     std::vector<ColorProfile *> getObjects() const;
 
     std::shared_ptr<Space::AnySpace> findSvgColorSpace(std::string const &input) const;
+
+    std::shared_ptr<Space::AnySpace> getDocumentColorSpace() const;
+    bool setDocumentColorSpace(std::shared_ptr<Space::AnySpace> const &space);
+    std::shared_ptr<Space::AnySpace> mapToStorageFormat(std::shared_ptr<Space::AnySpace> const &input) const;
 private:
     void refreshResources();
+    void invalidateCaches();
 
     SPDocument *_document = nullptr;
     std::vector<std::shared_ptr<ColorProfileLink>> _links;
@@ -89,6 +96,11 @@ private:
     sigc::signal<void()> _changed_signal;
 
     mutable std::map<std::string, std::shared_ptr<Space::CMS>> _spaces;
+
+    sigc::scoped_connection _document_space_watcher;
+    mutable std::shared_ptr<Space::AnySpace> _document_space;
+    mutable std::map<int, std::shared_ptr<Space::AnySpace>> _storage_map_cache;
+
 
 protected:
     friend class ColorProfileLink;
