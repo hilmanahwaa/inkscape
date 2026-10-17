@@ -98,6 +98,7 @@ ModifierIdToTypeMap const &modifier_type_from_id()
         {"pen-switch-axis", Type::PEN_SWITCH_AXIS},
         {"pencil-sketch", Type::PENCIL_SKETCH},
         {"tweak-invert", Type::TWEAK_INVERT},
+        {"text-clear-inline-size", Type::TEXT_CLEAR_INLINE_SIZE},
     };
     return static_id_to_type_map;
 }
@@ -159,6 +160,9 @@ Modifier::Container &Modifier::_modifiers()
 
     // Arc tool modifier
         make_modifier("arc-maintain-gap", _("Maintain gap"), _("Move both start and end knot of the arc"), SHIFT, ARC_TOOL, DRAG),
+
+    // Text tool modifier
+        make_modifier("text-clear-inline-size", _("Clear inline size"), _("Fit the text width for auto-wrapped text"), CTRL, TEXT_TOOL, CLICK),
 
     // Transform handle modifiers (applies to multiple tools)
         make_modifier("move-confine", _("Move one axis only"), _("When dragging items, confine to either x or y axis"), CTRL, MOVE, DRAG),
@@ -239,6 +243,7 @@ Modifier::CategoryNames const &Modifier::_category_names()
         {NODE_TOOL, _("Node Tool")},
         {BOOLEANS_TOOL, _("Shape Builder")},
         {ARC_TOOL, _("Ellipse/Arc Tool")},
+        {TEXT_TOOL, _("Text Tool")},
         {BOX3D_TOOL, _("3D Box Tool")},
         {CALLI_TOOL, _("Calligraphy Tool")},
         {DROPPER_TOOL, _("Dropper Tool")},

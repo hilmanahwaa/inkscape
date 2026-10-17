@@ -2075,6 +2075,9 @@ public:
     void knot_set(Geom::Point const &p, Geom::Point const &origin, unsigned int state) override;
     void knot_ungrabbed(Geom::Point const &p, Geom::Point const &origin, guint state) override {};
     void knot_click(unsigned int state) override;
+
+private:
+    Modifiers::Modifier *mod_clear_inline_size = Modifiers::Modifier::get(Modifiers::Type::TEXT_CLEAR_INLINE_SIZE);
 };
 
 Geom::Point
@@ -2227,7 +2230,7 @@ TextKnotHolderEntityInlineSize::knot_click(unsigned int state)
     auto text = cast<SPText>(item);
     g_assert(text != nullptr);
 
-    if (state & GDK_CONTROL_MASK) {
+    if (mod_clear_inline_size->active(state)) {
 
         text->style->inline_size.clear();
         text->remove_svg11_fallback();   // Else 'x' and 'y' will be interpreted as absolute positions.
