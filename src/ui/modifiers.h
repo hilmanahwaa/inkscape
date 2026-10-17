@@ -40,7 +40,7 @@ enum Triggers : Trigger {
     NODE_TOOL, BOOLEANS_TOOL, BOX3D_TOOL, CALLI_TOOL,
     DROPPER_TOOL, FLOOD_TOOL, SPIRAL_TOOL, STAR_TOOL,
     TWEAK_TOOL, GRADIENT_TOOL, MEASURE_TOOL, PENCIL_TOOL,
-    PEN_TOOL, ARC_TOOL,
+    PEN_TOOL, ARC_TOOL, TEXT_TOOL,
     // Action taken to trigger this modifier, starts at
     // bit 6 so categories and triggers can be combined.
     CLICK = 32,
@@ -81,6 +81,9 @@ enum class Type {
 
     // Arc tool
     ARC_MAINTAIN_GAP,     // Move both the start and end knots {SHIFT+DRAG}
+
+    // Text tool
+    TEXT_CLEAR_INLINE_SIZE,// Have width fit the content for auto-wrapped text {CTRL+CLICK}
 
     // Transform handles (applies to multiple tools)
     MOVE_CONFINE,         // Limit dragging to X OR Y only {DRAG+CTRL}
