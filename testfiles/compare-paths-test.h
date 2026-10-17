@@ -52,6 +52,68 @@ protected:
             failed.emplace_back(id);
         }
     }
+
+    void compareSinglePath(Geom::PathVector apv, Geom::PathVector bpv, double precision, bool &success)
+    {
+        size_t totala = apv.curveCount();
+        size_t totalb = bpv.curveCount();
+        size_t common_length = std::min(totala, totalb);
+        ASSERT_LE(totala, common_length + 1);
+        ASSERT_LE(totalb, common_length + 1);
+
+        // find initial
+        size_t initial = 0;
+        for (size_t i = 0; i < common_length; i++) {
+            Geom::Point pointa = apv.pointAt(0.0);
+            Geom::Point pointb = bpv.pointAt(i);
+            if (Geom::are_near(pointa, pointb, precision)) {
+                initial = i;
+                break;
+            }
+        }
+
+        if (initial != 0 && initial == common_length) {
+            std::cout << "[ WARN     ] Curve reversed. We do not block here. We reverse the path and test node positions on reverse" << std::endl;
+            bpv.reverse();
+        } else if (initial != 0) {
+            std::cout << "[ WARN     ] Different starting node. We do not block here. We gap the origin to " << initial << " de " << totala << " and test with the pathvector reindexed" << std::endl;
+        }
+
+        for (size_t i = 0; i < common_length; i++) {
+            if (initial >= common_length) {
+                initial = 0;
+            }
+            Geom::Point pointa = apv.pointAt(i + 0.2);
+            Geom::Point pointb = bpv.pointAt(initial + 0.2);
+            Geom::Point pointc = apv.pointAt(i + 0.4);
+            Geom::Point pointd = bpv.pointAt(initial + 0.4);
+            Geom::Point pointe = apv.pointAt(i);
+            Geom::Point pointf = bpv.pointAt(initial);
+            ASSERT_NEAR(pointa[Geom::X], pointb[Geom::X], precision);
+            ASSERT_NEAR(pointa[Geom::Y], pointb[Geom::Y], precision);
+            ASSERT_NEAR(pointc[Geom::X], pointd[Geom::X], precision);
+            ASSERT_NEAR(pointc[Geom::Y], pointd[Geom::Y], precision);
+            ASSERT_NEAR(pointe[Geom::X], pointf[Geom::X], precision);
+            ASSERT_NEAR(pointe[Geom::Y], pointf[Geom::Y], precision);
+            initial++;
+        }
+        // Depending on round the closing segment might be there, or it might be skipped.
+        // If lengths differ make sure extra segment is approximately 0.
+        if (totala > common_length) {
+            auto pa = apv.pointAt(totala);
+            auto pb = apv.pointAt(totala - 1);
+            ASSERT_NEAR(pa[Geom::X], pb[Geom::X], precision);
+            ASSERT_NEAR(pa[Geom::Y], pb[Geom::Y], precision);
+        }
+        if (totalb > common_length) {
+            auto pa = bpv.pointAt(totalb);
+            auto pb = bpv.pointAt(totalb - 1);
+            ASSERT_NEAR(pa[Geom::X], pb[Geom::X], precision);
+            ASSERT_NEAR(pa[Geom::Y], pb[Geom::Y], precision);
+        }
+        success = true;
+    }
+
     /*
     * succes is pased because functions with gtest asserts usualy be void you can override using 
     * HasFatalFailure() or similar on caller but but fail in all next calls and we want the list of all failed id only
@@ -74,6 +136,7 @@ protected:
 
         Geom::PathVector apv = sp_svg_read_pathv(a);
         Geom::PathVector bpv = sp_svg_read_pathv(b);
+
         if (apv.empty()) {
             FAIL() << "Couldn't parse original 'd'";
         }
@@ -81,49 +144,19 @@ protected:
             FAIL() << "Couldn't parse 'd'";
         }
 
-        size_t totala = apv.curveCount();
-        size_t totalb = bpv.curveCount();
-        ASSERT_EQ(totala, totalb);
-
-        // find initial
-        size_t initial = 0;
-        for (size_t i = 0; i < totala; i++) {
-            Geom::Point pointa = apv.pointAt(0.0);
-            Geom::Point pointb = bpv.pointAt(i);
-            if (Geom::are_near(pointa, pointb, precision)) {
-                initial = i;
-                break;
-            }
+        ASSERT_EQ(apv.size(), bpv.size());
+        for (size_t i = 0; i < apv.size(); i++) {
+            bool match = false;
+            compareSinglePath(apv[i], bpv[i], precision, match);
+            ASSERT_TRUE(match);
         }
 
-        if (initial != 0 && initial == totala) {
-            std::cout << "[ WARN     ] Curve reversed. We do not block here. We reverse the path and test node positions on reverse" << std::endl;
-            bpv.reverse();
-        } else if (initial != 0) {
-            std::cout << "[ WARN     ] Different starting node. We do not block here. We gap the origin to " << initial << " de " << totala << " and test with the pathvector reindexed" << std::endl;
-        }
-
-        for (size_t i = 0; i < totala; i++) {
-            if (initial >= totala) {
-                initial = 0;
-            }
-            Geom::Point pointa = apv.pointAt(i + 0.2);
-            Geom::Point pointb = bpv.pointAt(initial + 0.2);
-            Geom::Point pointc = apv.pointAt(i + 0.4);
-            Geom::Point pointd = bpv.pointAt(initial + 0.4);
-            Geom::Point pointe = apv.pointAt(i);
-            Geom::Point pointf = bpv.pointAt(initial);
-            ASSERT_NEAR(pointa[Geom::X], pointb[Geom::X], precision);
-            ASSERT_NEAR(pointa[Geom::Y], pointb[Geom::Y], precision);
-            ASSERT_NEAR(pointc[Geom::X], pointd[Geom::X], precision);
-            ASSERT_NEAR(pointc[Geom::Y], pointd[Geom::Y], precision);
-            ASSERT_NEAR(pointe[Geom::X], pointf[Geom::X], precision);
-            ASSERT_NEAR(pointe[Geom::Y], pointf[Geom::Y], precision);
-            initial++;
-        }
+        
         // we do whoole function without a fail so inform tall be sacessfull
         success = true;
     }
+
+
     
     void TearDown() override
     { 
